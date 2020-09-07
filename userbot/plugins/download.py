@@ -1,39 +1,29 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
-#
 # Licensed under the Raphielscape Public License, Version 1.c (the "License");
 # you may not use this file except in compliance with the License.
-#
 # The entire source code is OSSRPL except
 # 'download, uploadir, uploadas, upload' which is MPL
 # License: MPL and OSSRPL
 """ Userbot module which contains everything related to \
     downloading/uploading from/to the server. """
-import aiohttp
-import asyncio
 import os
 import time
-from datetime import datetime
-from telethon import events
-from telethon.tl.types import DocumentAttributeVideo
-import json
-import subprocess
 import math
+import asyncio
+from datetime import datetime
 from pySmartDL import SmartDL
-from hachoir.metadata import extractMetadata
-from hachoir.parser import createParser
-from userbot import LOGS, CMD_HELP, ALIVE_NAME , TEMP_DOWNLOAD_DIRECTORY
-from userbot.utils import admin_cmd, humanbytes, progress, time_formatter
-from userbot.uniborgConfig import Config
-thumb_image_path = Config.TMP_DOWNLOAD_DIRECTORY + "/thumb_image.jpg"
-import io
+from .. import ALIVE_NAME, CMD_HELP
+from ..utils import admin_cmd, edit_or_reply, humanbytes, progress, sudo_cmd
 
 DEFAULTUSER = str(ALIVE_NAME) if ALIVE_NAME else "cat"
 
+
 @borg.on(admin_cmd(pattern="download(?: |$)(.*)", outgoing=True))
+@borg.on(sudo_cmd(pattern="download(?: |$)(.*)", allow_sudo=True))
 async def _(event):
     if event.fwd_from:
         return
-    mone = await event.reply("Processing ...")
+    mone = await edit_or_reply(event, "`Processing ...`")
     input_str = event.pattern_match.group(1)
     if not os.path.isdir(Config.TMP_DOWNLOAD_DIRECTORY):
         os.makedirs(Config.TMP_DOWNLOAD_DIRECTORY)
@@ -42,7 +32,7 @@ async def _(event):
         reply_message = await event.get_reply_message()
         try:
             c_time = time.time()
-            downloaded_file_name = await event.client.download_media(
+            downloaded_file_name = await bot.download_media(
                 reply_message,
                 Config.TMP_DOWNLOAD_DIRECTORY,
                 progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
@@ -75,8 +65,8 @@ async def _(event):
             now = time.time()
             diff = now - c_time
             percentage = downloader.get_progress() * 100
-            speed = downloader.get_speed()
-            elapsed_time = round(diff) * 1000
+            downloader.get_speed()
+            round(diff) * 1000
             progress_str = "{0}{1}\nProgress: {2}%".format(
                 ''.join(["█" for i in range(math.floor(percentage / 5))]),
                 ''.join(["░" for i in range(20 - math.floor(percentage / 5))]),
@@ -84,7 +74,9 @@ async def _(event):
             estimated_total_time = downloader.get_eta(human=True)
             try:
                 current_message = f"trying to download\nURL: {url}\nFile Name: {file_name}\n{progress_str}\n{humanbytes(downloaded)} of {humanbytes(total_length)}\nETA: {estimated_total_time}"
-                if round(diff % 10.00) == 0 and current_message != display_message:
+                if round(
+                        diff %
+                        10.00) == 0 and current_message != display_message:
                     await mone.edit(current_message)
                     display_message = current_message
             except Exception as e:
@@ -96,10 +88,10 @@ async def _(event):
         else:
             await mone.edit("Incorrect URL\n {}".format(input_str))
     else:
-        await mone.edit("Reply to a message to download to my local server.")        
-        
+        await mone.edit("Reply to a message to download to my local server.")
+
 CMD_HELP.update({
     "download":
     ".download <link|filename> or reply to media\
 \nUsage: Downloads file to the server."
-})     
+})

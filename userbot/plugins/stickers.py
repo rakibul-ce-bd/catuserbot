@@ -30,6 +30,7 @@ KANGING_STR = [
     "Mr.Steal Your Sticker is stealing this sticker... ",
 ]
 
+
 @borg.on(admin_cmd(pattern="kang ?(.*)"))
 async def kang(args):
     """ For .kang command, kangs stickers or creates new ones. """
@@ -79,24 +80,27 @@ async def kang(args):
         return
     if photo:
         splat = args.text.split()
-        emoji = "😂"
+        if emojibypass:
+            emoji = emoji
+        else:
+            emoji = "😂"
         pack = 1
         if len(splat) == 3:
             if char_is_emoji(splat[1]):
+                if char_is_emoji(splat[2]):
+                    return await args.edit("check `.info stickers`")
                 pack = splat[2]  # User sent both
                 emoji = splat[1]
             elif char_is_emoji(splat[2]):
                 pack = splat[1]  # User sent both
                 emoji = splat[2]
             else:
-                await args.edit("check `.info stickers`")
-                return
+                return await args.edit("check `.info stickers`")
         elif len(splat) == 2:
             if char_is_emoji(splat[1]):
                 emoji = splat[1]
             else:
                 pack = splat[1]
-                
         packname = f"{user.username}_{pack}"
         packnick = f"@{user.username}'s_{pack}"
         cmd = '/newpack'
@@ -121,12 +125,17 @@ async def kang(args):
                 await conv.send_message(packname)
                 x = await conv.get_response()
                 while "Whoa! That's probably enough stickers for one pack, give it a break" in x.text:
-                    if pack.isnumeric():
-                        pack += 1
-                    else:
+                    try:
+                        val = int(pack)
+                        pack = val + 1
+                    except ValueError:
                         pack = 1
-                    packname = f"{user.username}_{pack}"
-                    packnick = f"@{user.username}'s_{pack}"
+                    if not is_anim:
+                        packname = f"{user.username}_{pack}"
+                        packnick = f"@{user.username}'s_{pack}"
+                    else:
+                        packname = f"{user.username}_{pack}_anim"
+                        packnick = f"@{user.username}'s_{pack} (Animated)"
                     await args.edit("`Switching to Pack " + str(pack) +
                                     " due to insufficient space`")
                     await conv.send_message(packname)
@@ -242,6 +251,7 @@ async def kang(args):
             \nPack can be found [here](t.me/addstickers/{packname}) and emoji of the sticker is {emoji}",
                         parse_mode='md')
 
+
 async def resize_photo(photo):
     """ Resize the given photo to 512x512 """
     image = Image.open(photo)
@@ -265,8 +275,10 @@ async def resize_photo(photo):
         image.thumbnail(maxsize)
     return image
 
+
 def char_is_emoji(character):
     return character in emoji.UNICODE_EMOJI
+
 
 @borg.on(admin_cmd(pattern="stkrinfo$"))
 async def get_pack_info(event):
@@ -306,14 +318,15 @@ async def get_pack_info(event):
 
 CMD_HELP.update({
     "stickers":
-    ".kang\
-\nUsage: Reply .kang to a sticker or an image to kang it to your userbot pack.\
-\n\n.kang [emoji('s)]\
-\nUsage: Works just like .kang but uses the emoji('s) you picked.\
-\n\n.kang [number]\
-\nUsage: Kang's the sticker/image to the specified pack but uses 🤔 as emoji.\
-\n\n.kang [emoji('s)] [number]\
-\nUsage: Kang's the sticker/image to the specified pack and uses the emoji('s) you picked.\
-\n\n.stkrinfo\
-\nUsage: Gets info about the sticker pack."
+    "**Plugins : **`stickers`\
+    \n\n**Syntax : **`.kang`\
+\n**Usage : **Reply .kang to a sticker or an image to kang it to your userbot pack.\
+\n\n**Syntax : **`.kang [emoji('s)]`\
+\n**Usage : **Works just like .kang but uses the emoji('s) you picked.\
+\n\n**Syntax : **`.kang [number]`\
+\n**Usage : **Kang's the sticker/image to the specified pack but uses 🤔 as emoji.\
+\n\n**Syntax : **`.kang [emoji('s)] [number]`\
+\n**Usage : **Kang's the sticker/image to the specified pack and uses the emoji('s) you picked.\
+\n\n**Syntax : **`.stkrinfo`\
+\n**Usage : **Gets info about the sticker pack."
 })
