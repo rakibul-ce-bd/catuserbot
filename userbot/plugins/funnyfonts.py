@@ -1,12 +1,25 @@
-""" plugin is modified by @sn12384 """
-import re
-from userbot import CMD_HELP, fonts
-from userbot.utils import admin_cmd
 import random
+import re
+
+from userbot import catub
+
+from ..core.managers import edit_or_reply
+from . import fonts
+
+plugin_category = "fun"
 
 
-@borg.on(admin_cmd(pattern="str(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="str(?: |$)(.*)",
+    command=("str", plugin_category),
+    info={
+        "header": "stretches the given text",
+        "usage": ["{tr}str <text>", "{tr}str reply this command to text message"],
+        "examples": "{tr}str catuserbot",
+    },
+)
 async def stretch(stret):
+    "stretches the given text"
     textx = await stret.get_reply_message()
     message = stret.text
     message = stret.pattern_match.group(1)
@@ -15,21 +28,26 @@ async def stretch(stret):
     elif textx:
         message = textx.text
     else:
-        await stret.edit("`GiiiiiiiB sooooooomeeeeeee teeeeeeext!`")
+        await edit_or_reply(stret, "`GiiiiiiiB sooooooomeeeeeee teeeeeeext!`")
         return
 
     count = random.randint(3, 10)
-    reply_text = re.sub(
-        r"([aeiouAEIOUａｅｉｏｕＡＥＩＯＵаеиоуюяыэё])",
-        (r"\1" * count),
-        message
-    )
-    await stret.edit(reply_text)
+    reply_text = re.sub(r"([aeiouAEIOUａｅｉｏｕＡＥＩＯＵаеиоуюяыэё])", (r"\1" * count), message)
+    await edit_or_reply(stret, reply_text)
 
 
-@borg.on(admin_cmd(pattern="zal(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="zal(?: |$)(.*)",
+    command=("zal", plugin_category),
+    info={
+        "header": "chages given text into some funny way",
+        "usage": ["{tr}zal <text>", "{tr}zal reply this command to text message"],
+        "examples": "{tr}zal catuserbot",
+    },
+)
 async def zal(zgfy):
-    reply_text = list()
+    "chages given text into some funny way"
+    reply_text = []
     textx = await zgfy.get_reply_message()
     message = zgfy.pattern_match.group(1)
     if message:
@@ -37,8 +55,8 @@ async def zal(zgfy):
     elif textx:
         message = textx.text
     else:
-        await zgfy.edit(
-            "`gͫ ̆ i̛ ̺ v͇̆ ȅͅ   a̢ͦ   s̴̪ c̸̢ ä̸ rͩͣ y͖͞   t̨͚ é̠ x̢͖  t͔͛`"
+        await edit_or_reply(
+            zgfy, "`gͫ ̆ i̛ ̺ v͇̆ ȅͅ   a̢ͦ   s̴̪ c̸̢ ä̸ rͩͣ y͖͞   t̨͚ é̠ x̢͖  t͔͛`"
         )
         return
 
@@ -47,26 +65,32 @@ async def zal(zgfy):
             reply_text.append(charac)
             continue
 
-        for _ in range(0, 3):
+        for _ in range(3):
             randint = random.randint(0, 2)
 
             if randint == 0:
-                charac = charac.strip() + \
-                    random.choice(fonts.ZALG_LIST[0]).strip()
+                charac = charac.strip() + random.choice(fonts.ZALG_LIST[0]).strip()
             elif randint == 1:
-                charac = charac.strip() + \
-                    random.choice(fonts.ZALG_LIST[1]).strip()
+                charac = charac.strip() + random.choice(fonts.ZALG_LIST[1]).strip()
             else:
-                charac = charac.strip() + \
-                    random.choice(fonts.ZALG_LIST[2]).strip()
+                charac = charac.strip() + random.choice(fonts.ZALG_LIST[2]).strip()
 
         reply_text.append(charac)
 
-    await zgfy.edit("".join(reply_text))
+    await edit_or_reply(zgfy, "".join(reply_text))
 
 
-@borg.on(admin_cmd(pattern="cp(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="cp(?: |$)(.*)",
+    command=("cp", plugin_category),
+    info={
+        "header": "chages given text into some funny way",
+        "usage": ["{tr}cp <text>", "{tr}cp reply this command to text message"],
+        "examples": "{tr}cp catuserbot",
+    },
+)
 async def copypasta(cp_e):
+    "chages given text into some funny way"
     textx = await cp_e.get_reply_message()
     message = cp_e.pattern_match.group(1)
 
@@ -75,7 +99,7 @@ async def copypasta(cp_e):
     elif textx:
         message = textx.text
     else:
-        await cp_e.edit("`😂🅱️IvE👐sOME👅text👅for✌️Me👌tO👐MAkE👀iT💞funNy!💦`")
+        await edit_or_reply(cp_e, "`😂🅱️IvE👐sOME👅text👅for✌️Me👌tO👐MAkE👀iT💞funNy!💦`")
         return
 
     reply_text = random.choice(fonts.EMOJIS)
@@ -90,94 +114,125 @@ async def copypasta(cp_e):
         elif owo.lower() == b_char:
             reply_text += "🅱️"
         else:
-            if bool(random.getrandbits(1)):
-                reply_text += owo.upper()
-            else:
-                reply_text += owo.lower()
+            reply_text += owo.upper() if bool(random.getrandbits(1)) else owo.lower()
     reply_text += random.choice(fonts.EMOJIS)
-    await cp_e.edit(reply_text)
+    await edit_or_reply(cp_e, reply_text)
 
 
-@borg.on(admin_cmd(pattern="weeb(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="weeb(?: |$)(.*)",
+    command=("weeb", plugin_category),
+    info={
+        "header": "chages given text into some funny way",
+        "usage": ["{tr}weeb <text>", "{tr}weeb reply this command to text message"],
+        "examples": "{tr}weeb catuserbot",
+    },
+)
 async def weebify(event):
+    "chages given text into some funny way"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("`What I am Supposed to Weebify `")
+        await edit_or_reply(event, "`What I am Supposed to Weebify `")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normiecharacter in string:
         if normiecharacter in fonts.normiefont:
-            weebycharacter = fonts.weebyfont[fonts.normiefont.index(
-                normiecharacter)]
+            weebycharacter = fonts.weebyfont[fonts.normiefont.index(normiecharacter)]
             string = string.replace(normiecharacter, weebycharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="downside(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="downside(?: |$)(.*)",
+    command=("downside", plugin_category),
+    info={
+        "header": "chages given text into upside down",
+        "usage": [
+            "{tr}downside <text>",
+            "{tr}downside reply this command to text message",
+        ],
+        "examples": "{tr}downside catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "chages given text into upside down"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for upsidecharacter in string:
         if upsidecharacter in fonts.upsidefont:
-            downsidecharacter = fonts.downsidefont[fonts.upsidefont.index(
-                upsidecharacter)]
+            downsidecharacter = fonts.downsidefont[
+                fonts.upsidefont.index(upsidecharacter)
+            ]
             string = string.replace(upsidecharacter, downsidecharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="subscript(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="subscript(?: |$)(.*)",
+    command=("subscript", plugin_category),
+    info={
+        "header": "chages given text into subscript",
+        "usage": [
+            "{tr}subscript <text>",
+            "{tr}subscript reply this command to text message",
+        ],
+        "examples": "{tr}subscript catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "chages given text into subscript"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            subscriptcharacter = fonts.subscriptfont[fonts.normaltext.index(
-                normaltextcharacter)]
+            subscriptcharacter = fonts.subscriptfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
             string = string.replace(normaltextcharacter, subscriptcharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="superscript(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="superscript(?: |$)(.*)",
+    command=("superscript", plugin_category),
+    info={
+        "header": "chages given text into superscript",
+        "usage": [
+            "{tr}superscript <text>",
+            "{tr}superscript reply this command to text message",
+        ],
+        "examples": "{tr}superscript catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "chages given text into superscript"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            superscriptcharacter = fonts.superscriptfont[fonts.normaltext.index(
-                normaltextcharacter)]
+            superscriptcharacter = fonts.superscriptfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
             string = string.replace(normaltextcharacter, superscriptcharacter)
-    await event.edit(string)
-
-
-CMD_HELP.update({
-    "funnyfonts": ".cp (text) or .cp reply to message \
-\nUsage: inserts some emojis in between the texts\
-\n\n.str (text) or .str reply to message \
-\nUsage: Stretchs the given message.\
-\n\n.zal (text) or .zal reply to message \
-\nUsage: Invoke the feeling of chaos.\
-\n\n.weeb (text) or .weeb reply to message \
-\nUsage: a different style of alphabets .\
-"
-})
+    await edit_or_reply(event, string)

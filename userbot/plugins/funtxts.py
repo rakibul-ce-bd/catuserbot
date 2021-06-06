@@ -1,26 +1,49 @@
 import nekos
-from ..utils import admin_cmd
+
+from userbot import catub
+
+from ..core.managers import edit_or_reply
+
+plugin_category = "fun"
 
 
-@borg.on(admin_cmd(pattern="tcat$"))
+@catub.cat_cmd(
+    pattern="tcat$",
+    command=("tcat", plugin_category),
+    info={
+        "header": "Some random cat facial text art",
+        "usage": "{tr}tcat",
+    },
+)
 async def hmm(cat):
-    if cat.fwd_from:
-        return
+    "Some random cat facial text art"
     reactcat = nekos.textcat()
-    await cat.edit(reactcat)
+    await edit_or_reply(cat, reactcat)
 
 
-@borg.on(admin_cmd(pattern="why$"))
+@catub.cat_cmd(
+    pattern="why$",
+    command=("why", plugin_category),
+    info={
+        "header": "Sends you some random Funny questions",
+        "usage": "{tr}why",
+    },
+)
 async def hmm(cat):
-    if cat.fwd_from:
-        return
+    "Some random Funny questions"
     whycat = nekos.why()
-    await cat.edit(whycat)
+    await edit_or_reply(cat, whycat)
 
 
-@borg.on(admin_cmd(pattern="fact$"))
+@catub.cat_cmd(
+    pattern="fact$",
+    command=("fact", plugin_category),
+    info={
+        "header": "Sends you some random facts",
+        "usage": "{tr}fact",
+    },
+)
 async def hmm(cat):
-    if cat.fwd_from:
-        return
+    "Some random facts"
     factcat = nekos.fact()
-    await cat.edit(factcat)
+    await edit_or_reply(cat, factcat)

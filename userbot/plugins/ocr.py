@@ -1,21 +1,19 @@
-# Copyright (C) 2019 The Raphielscape Company LLC.
-#
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
-# you may not use this file except in compliance with the License.
-
 import os
+
 import requests
-from userbot import bot, CMD_HELP, TEMP_DOWNLOAD_DIRECTORY
-from userbot.utils import admin_cmd
 
-OCR_SPACE_API_KEY = Config.OCR_SPACE_API_KEY
+from userbot import catub
+
+from ..Config import Config
+from ..core.managers import edit_or_reply
+
+plugin_category = "utils"
 
 
-async def ocr_space_file(filename,
-                         overlay=False,
-                         api_key=OCR_SPACE_API_KEY,
-                         language='eng'):
-    """ OCR.space API request with local file.
+async def ocr_space_file(
+    filename, overlay=False, api_key=Config.OCR_SPACE_API_KEY, language="eng"
+):
+    """OCR.space API request with local file.
         Python3.5 - not tested on 2.7
     :param filename: Your file path & name.
     :param overlay: Is OCR.space overlay required in your response.
@@ -29,40 +27,43 @@ async def ocr_space_file(filename,
     """
 
     payload = {
-        'isOverlayRequired': overlay,
-        'apikey': api_key,
-        'language': language,
+        "isOverlayRequired": overlay,
+        "apikey": api_key,
+        "language": language,
     }
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         r = requests.post(
-            'https://api.ocr.space/parse/image',
+            "https://api.ocr.space/parse/image",
             files={filename: f},
             data=payload,
         )
     return r.json()
 
 
-@borg.on(admin_cmd(pattern="ocr(?: |$)(.*)", outgoing=True))
+@catub.cat_cmd(
+    pattern="ocr(?: |$)(.*)",
+    command=("ocr", plugin_category),
+    info={
+        "header": "To read text in image and print it.",
+        "description": "Reply to an image or sticker to extract text from it.\n\nGet language codes from [here](https://ocr.space/ocrapi).",
+        "usage": "{tr}ocr <language code>",
+        "examples": "{tr}ocr eng",
+    },
+)
 async def ocr(event):
-    await event.edit("`Reading...`")
-    if not os.path.isdir(TEMP_DOWNLOAD_DIRECTORY):
-        os.makedirs(TEMP_DOWNLOAD_DIRECTORY)
+    "To read text in image."
+    catevent = await edit_or_reply(event, "`Reading...`")
+    if not os.path.isdir(Config.TEMP_DIR):
+        os.makedirs(Config.TEMP_DIR)
     lang_code = event.pattern_match.group(1)
-    downloaded_file_name = await bot.download_media(
-        await event.get_reply_message(), TEMP_DOWNLOAD_DIRECTORY)
-    test_file = await ocr_space_file(filename=downloaded_file_name,
-                                     language=lang_code)
+    downloaded_file_name = await event.client.download_media(
+        await event.get_reply_message(), Config.TEMP_DIR
+    )
+    test_file = await ocr_space_file(filename=downloaded_file_name, language=lang_code)
     try:
         ParsedText = test_file["ParsedResults"][0]["ParsedText"]
     except BaseException:
-        await event.edit("`Couldn't read it.`\n`I guess I need new glasses.`")
+        await catevent.edit("`Couldn't read it.`\n`I guess I need new glasses.`")
     else:
-        await event.edit(f"`Here's what I could read from it:`\n\n{ParsedText}"
-                         )
+        await catevent.edit(f"`Here's what I could read from it:`\n\n{ParsedText}")
     os.remove(downloaded_file_name)
-
-
-CMD_HELP.update({
-    'ocr':
-    ".ocr <language>\nUsage: Reply to an image or sticker to extract text from it.\n\nGet language codes from [here](https://ocr.space/ocrapi)"
-})

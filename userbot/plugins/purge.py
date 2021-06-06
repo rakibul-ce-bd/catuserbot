@@ -1,134 +1,244 @@
-# Copyright (C) 2019 The Raphielscape Company LLC.
-#
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
-# you may not use this file except in compliance with the License.
-#
-""" Userbot module for purging unneeded messages(usually spam or ot). """
-
+# Userbot module for purging unneeded messages(usually spam or ot).
 from asyncio import sleep
+
 from telethon.errors import rpcbaseerrors
-from userbot import CMD_HELP
-from userbot.utils import admin_cmd, errors_handler
-from userbot.uniborgConfig import Config
+
+from userbot import catub
+
+from ..core.managers import edit_delete, edit_or_reply
+from ..helpers.utils import reply_id
+from . import BOTLOG, BOTLOG_CHATID
+
+plugin_category = "utils"
 
 
-if Config.PRIVATE_GROUP_BOT_API_ID is None:
-    BOTLOG = False
-else:
-    BOTLOG = True
-    BOTLOG_CHATID = Config.PRIVATE_GROUP_BOT_API_ID
+purgelist = {}
 
 
-@borg.on(admin_cmd(outgoing=True, pattern="purge$"))
-@errors_handler
-async def fastpurger(purg):
-    """ For .purge command, purge all messages starting from the reply. """
-    chat = await purg.get_input_chat()
+@catub.cat_cmd(
+    pattern="purge(?: |$)(.*)",
+    command=("purge", plugin_category),
+    info={
+        "header": "To purge messages from the replied message.",
+        "description": "Deletes the x(count) amount of messages from the replied message if you don't use count then deletes all messages from there",
+        "usage": [
+            "{tr}purge <count> <reply>",
+            "{tr}purge <reply>",
+        ],
+        "examples": "{tr}purge 10",
+    },
+)
+async def fastpurger(event):
+    "To purge messages from the replied message"
+    chat = await event.get_input_chat()
     msgs = []
-    itermsg = purg.client.iter_messages(chat, min_id=purg.reply_to_msg_id)
     count = 0
-
-    if purg.reply_to_msg_id is not None:
-        async for msg in itermsg:
-            msgs.append(msg)
-            count = count + 1
-            msgs.append(purg.reply_to_msg_id)
-            if len(msgs) == 100:
-                await purg.client.delete_messages(chat, msgs)
-                msgs = []
+    input_str = event.pattern_match.group(1)
+    reply = await event.get_reply_message()
+    if reply:
+        if input_str and input_str.isnumeric():
+            count += 1
+            async for msg in event.client.iter_messages(
+                event.chat_id,
+                limit=(int(input_str) - 1),
+                offset_id=reply.id,
+                reverse=True,
+            ):
+                msgs.append(msg)
+                count += 1
+                msgs.append(event.reply_to_msg_id)
+                if len(msgs) == 100:
+                    await event.client.delete_messages(chat, msgs)
+                    msgs = []
+        elif input_str:
+            return await edit_or_reply(
+                event, f"**Error**\n`{input_str} is not an integer. Use proper syntax.`"
+            )
+        else:
+            async for msg in event.client.iter_messages(
+                chat, min_id=event.reply_to_msg_id
+            ):
+                msgs.append(msg)
+                count += 1
+                msgs.append(event.reply_to_msg_id)
+                if len(msgs) == 100:
+                    await event.client.delete_messages(chat, msgs)
+                    msgs = []
     else:
-        await purg.edit("`No message specified.`", )
+        await edit_or_reply(
+            event,
+            "`No message specified.`",
+        )
         return
-
     if msgs:
-        await purg.client.delete_messages(chat, msgs)
-    done = await purg.client.send_message(
-        purg.chat_id,
-        "Fast purge complete!\nPurged " + str(count) + " messages.",
+        await event.client.delete_messages(chat, msgs)
+    await event.delete()
+    hi = await event.client.send_message(
+        event.chat_id,
+        "`Fast purge complete!\nPurged " + str(count) + " messages.`",
     )
-
     if BOTLOG:
-        await purg.client.send_message(
+        await event.client.send_message(
             BOTLOG_CHATID,
-            "#PURGE \nPurge of " + str(count) + " messages done successfully.")
-    await sleep(2)
-    await done.delete()
+            "#PURGE \n`Purge of " + str(count) + " messages done successfully.`",
+        )
+    await sleep(5)
+    await hi.delete()
 
 
-@borg.on(admin_cmd(outgoing=True, pattern="purgeme"))
-@errors_handler
-async def purgeme(delme):
-    """ For .purgeme, delete x count of your latest message."""
-    message = delme.text
+@catub.cat_cmd(
+    pattern="purgefrom$",
+    command=("purgefrom", plugin_category),
+    info={
+        "header": "To mark the replied message as starting message of purge list.",
+        "description": "After using this u must use purgeto command also so that the messages in between this will delete.",
+        "usage": "{tr}purgefrom",
+    },
+)
+async def purge_from(event):
+    "To mark the message for purging"
+    reply = await event.get_reply_message()
+    if reply:
+        reply_message = await reply_id(event)
+        purgelist[event.chat_id] = reply_message
+        await edit_delete(
+            event,
+            "`This Message marked for deletion. Reply to another message with purgeto to delete all messages in between.`",
+        )
+    else:
+        await edit_delete(event, "`Reply to a message to let me know what to delete.`")
+
+
+@catub.cat_cmd(
+    pattern="purgeto$",
+    command=("purgeto", plugin_category),
+    info={
+        "header": "To mark the replied message as end message of purge list.",
+        "description": "U need to use purgefrom command before using this command to function this.",
+        "usage": "{tr}purgeto",
+    },
+)
+async def purge_to(event):
+    "To mark the message for purging"
+    chat = await event.get_input_chat()
+    reply = await event.get_reply_message()
+    try:
+        from_message = purgelist[event.chat_id]
+    except KeyError:
+        return await edit_delete(
+            event,
+            "`First mark the messsage with purgefrom and then mark purgeto .So, I can delete in between Messages`",
+        )
+    if not reply or not from_message:
+        return await edit_delete(
+            event,
+            "`First mark the messsage with purgefrom and then mark purgeto .So, I can delete in between Messages`",
+        )
+    try:
+        to_message = await reply_id(event)
+        msgs = []
+        count = 0
+        async for msg in event.client.iter_messages(
+            event.chat_id, min_id=(from_message - 1), max_id=(to_message + 1)
+        ):
+            msgs.append(msg)
+            count += 1
+            msgs.append(event.reply_to_msg_id)
+            if len(msgs) == 100:
+                await event.client.delete_messages(chat, msgs)
+                msgs = []
+        if msgs:
+            await event.client.delete_messages(chat, msgs)
+        await edit_delete(
+            event,
+            "`Fast purge complete!\nPurged " + str(count) + " messages.`",
+        )
+        if BOTLOG:
+            await event.client.send_message(
+                BOTLOG_CHATID,
+                "#PURGE \n`Purge of " + str(count) + " messages done successfully.`",
+            )
+    except Exception as e:
+        await edit_delete(event, f"**Error**\n`{str(e)}`")
+
+
+@catub.cat_cmd(
+    pattern="purgeme",
+    command=("purgeme", plugin_category),
+    info={
+        "header": "To purge your latest messages.",
+        "description": "Deletes x(count) amount of your latest messages.",
+        "usage": "{tr}purgeme <count>",
+        "examples": "{tr}purgeme 2",
+    },
+)
+async def purgeme(event):
+    "To purge your latest messages."
+    message = event.text
     count = int(message[9:])
     i = 1
-
-    async for message in delme.client.iter_messages(delme.chat_id,
-                                                    from_user='me'):
+    async for message in event.client.iter_messages(event.chat_id, from_user="me"):
         if i > count + 1:
             break
-        i = i + 1
+        i += 1
         await message.delete()
 
-    smsg = await delme.client.send_message(
-        delme.chat_id,
-        "`Purge complete!` Purged " + str(count) + " messages.",
+    smsg = await event.client.send_message(
+        event.chat_id,
+        "**Purge complete!**` Purged " + str(count) + " messages.`",
     )
     if BOTLOG:
-        await delme.client.send_message(
+        await event.client.send_message(
             BOTLOG_CHATID,
-            "#PURGEME \nPurge of " + str(count) + " messages done successfully.")
-    await sleep(2)
-    i = 1
+            "#PURGEME \n`Purge of " + str(count) + " messages done successfully.`",
+        )
+    await sleep(5)
     await smsg.delete()
 
 
-@borg.on(admin_cmd(outgoing=True, pattern="del$"))
-@errors_handler
-async def delete_it(delme):
-    """ For .del command, delete the replied message. """
-    msg_src = await delme.get_reply_message()
-    if delme.reply_to_msg_id:
-        try:
-            await msg_src.delete()
-            await delme.delete()
-            if BOTLOG:
-                await delme.client.send_message(
-                    BOTLOG_CHATID, "#DEL \nDeletion of message was successful")
-        except rpcbaseerrors.BadRequestError:
-            if BOTLOG:
-                await delme.client.send_message(
-                    BOTLOG_CHATID, "Well, I can't delete a message")
-
-
-@borg.on(admin_cmd(outgoing=True, pattern="edit"))
-@errors_handler
-async def editer(edit):
-    """ For .editme command, edit your last message. """
-    message = edit.text
-    chat = await edit.get_input_chat()
-    self_id = await edit.client.get_peer_id('me')
-    string = str(message[6:])
-    i = 1
-    async for message in edit.client.iter_messages(chat, self_id):
-        if i == 2:
-            await message.edit(string)
-            await edit.delete()
-            break
-        i = i + 1
-    if BOTLOG:
-        await edit.client.send_message(BOTLOG_CHATID,
-                                       "#EDIT \nEdit query was executed successfully")
-
-
-CMD_HELP.update({
-    'purge':
-    ".purge\
-    \nUsage: Purges all messages starting from the reply.\
-    \n\n.purgeme <x>\
-    \nUsage: Deletes x amount of your latest messages.\
-    \n\n.del\
-    \nUsage: Deletes the message you replied to.\
-    \n\n.edit <newmessage>\
-    \nUsage: Replace your last message with <newmessage>."
-})
+@catub.cat_cmd(
+    pattern="del(\s*| \d+)$",
+    command=("del", plugin_category),
+    info={
+        "header": "To delete replied message.",
+        "description": "Deletes the message you replied to in x(count) seconds if count is not used then deletes immediately",
+        "usage": ["{tr}del <time in seconds>", "{tr}del"],
+        "examples": "{tr}del 2",
+    },
+)
+async def delete_it(event):
+    "To delete replied message."
+    input_str = event.pattern_match.group(1).strip()
+    msg_src = await event.get_reply_message()
+    if msg_src:
+        if input_str and input_str.isnumeric():
+            await event.delete()
+            await sleep(int(input_str))
+            try:
+                await msg_src.delete()
+                if BOTLOG:
+                    await event.client.send_message(
+                        BOTLOG_CHATID, "#DEL \n`Deletion of message was successful`"
+                    )
+            except rpcbaseerrors.BadRequestError:
+                if BOTLOG:
+                    await event.client.send_message(
+                        BOTLOG_CHATID,
+                        "`Well, I can't delete a message. I am not an admin`",
+                    )
+        elif input_str:
+            if not input_str.startswith("var"):
+                await edit_or_reply(event, "`Well the time you mentioned is invalid.`")
+        else:
+            try:
+                await msg_src.delete()
+                await event.delete()
+                if BOTLOG:
+                    await event.client.send_message(
+                        BOTLOG_CHATID, "#DEL \n`Deletion of message was successful`"
+                    )
+            except rpcbaseerrors.BadRequestError:
+                await edit_or_reply(event, "`Well, I can't delete a message`")
+    else:
+        if not input_str:
+            await event.delete()

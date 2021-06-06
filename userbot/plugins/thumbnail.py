@@ -1,100 +1,92 @@
-"""Thumbnail Utilities, © @AnyDLBot
-Available Commands:
-.savethumbnail
-.clearthumbnail
-.getthumbnail"""
 import os
-import subprocess
+
 from hachoir.metadata import extractMetadata
 from hachoir.parser import createParser
 from PIL import Image
-from userbot.utils import admin_cmd
+
+from userbot import catub
+
+from ..Config import Config
+from ..core.managers import edit_or_reply
+from ..helpers.utils import _cattools
+from . import CMD_HELP
+
+plugin_category = "utils"
+
+# Thumbnail Utilities ported from uniborg
+# credits @spechide
+
 
 thumb_image_path = Config.TMP_DOWNLOAD_DIRECTORY + "/thumb_image.jpg"
 
 
-def get_video_thumb(file, output=None, width=320):
-    output = file + ".jpg"
-    metadata = extractMetadata(createParser(file))
-    p = subprocess.Popen([
-        'ffmpeg', '-i', file,
-        '-ss', str(int((0, metadata.get('duration').seconds)
-                       [metadata.has('duration')] / 2)),
-        # '-filter:v', 'scale={}:-1'.format(width),
-        '-vframes', '1',
-        output,
-    ], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    p.communicate()
-    if not p.returncode and os.path.lexists(file):
-        os.remove(file)
-        return output
-
-
-@borg.on(admin_cmd(pattern="savethumbnail"))
+@catub.cat_cmd(
+    pattern="savethumb$",
+    command=("savethumb", plugin_category),
+    info={
+        "header": "To save replied image as temporary thumb.",
+        "usage": "{tr}savethumb",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
-    await event.edit("Processing ...")
-    if not os.path.isdir(Config.TMP_DOWNLOAD_DIRECTORY):
-        os.makedirs(Config.TMP_DOWNLOAD_DIRECTORY)
-    if event.reply_to_msg_id:
-        downloaded_file_name = await borg.download_media(
-            await event.get_reply_message(),
-            Config.TMP_DOWNLOAD_DIRECTORY
-        )
-        if downloaded_file_name.endswith(".mp4"):
-            downloaded_file_name = get_video_thumb(
-                downloaded_file_name
-            )
+    "To save replied image as temporary thumb."
+    catevent = await edit_or_reply(event, "`Processing ...`")
+    if not event.reply_to_msg_id:
+        return await catevent.edit("`Reply to a photo to save custom thumbnail`")
+    downloaded_file_name = await event.client.download_media(
+        await event.get_reply_message(), Config.TMP_DOWNLOAD_DIRECTORY
+    )
+    if downloaded_file_name.endswith(".mp4"):
         metadata = extractMetadata(createParser(downloaded_file_name))
-        height = 0
-        if metadata.has("height"):
-            height = metadata.get("height")
-        # resize image
-        # ref: https://t.me/PyrogramChat/44663
-        # https://stackoverflow.com/a/21669827/4723940
-        Image.open(downloaded_file_name).convert(
-            "RGB").save(downloaded_file_name)
-        img = Image.open(downloaded_file_name)
-        # https://stackoverflow.com/a/37631799/4723940
-        # img.thumbnail((320, 320))
-        img.resize((320, height))
-        img.save(thumb_image_path, "JPEG")
-        # https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#create-thumbnails
-        os.remove(downloaded_file_name)
-        await event.edit(
-            "Custom video / file thumbnail saved. " +
-            "This image will be used in the upload, till `.clearthumbnail`."
+        if metadata and metadata.has("duration"):
+            duration = metadata.get("duration").seconds
+        downloaded_file_name = await _cattools.take_screen_shot(
+            downloaded_file_name, duration
         )
-    else:
-        await event.edit("Reply to a photo to save custom thumbnail")
+    # https://stackoverflow.com/a/21669827/4723940
+    Image.open(downloaded_file_name).convert("RGB").save(thumb_image_path, "JPEG")
+    # https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#create-thumbnails
+    os.remove(downloaded_file_name)
+    await catevent.edit(
+        "Custom video/file thumbnail saved. This image will be used in the upload, till `.clearthumb`."
+    )
 
 
-@borg.on(admin_cmd(pattern="clearthumbnail"))
+@catub.cat_cmd(
+    pattern="clearthumb$",
+    command=("clearthumb", plugin_category),
+    info={
+        "header": "To delete thumb image.",
+        "usage": "{tr}clearthumb",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "To delete thumb image."
     if os.path.exists(thumb_image_path):
         os.remove(thumb_image_path)
-    await event.edit("✅ Custom thumbnail cleared succesfully.")
+    else:
+        await edit_or_reply(event, "`No thumbnail is set to clear`")
+    await edit_or_reply(event, "✅ Custom thumbnail cleared succesfully.")
 
 
-@borg.on(admin_cmd(pattern="getthumbnail"))
+@catub.cat_cmd(
+    pattern="getthumb$",
+    command=("getthumb", plugin_category),
+    info={
+        "header": "To get thumbnail of given video or gives your present thumbnail.",
+        "usage": "{tr}getthumb",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
-    await event.edit("processing..........")
+    "To get thumbnail of given video or gives your present thumbnail"
     if event.reply_to_msg_id:
         r = await event.get_reply_message()
         try:
-            a = await borg.download_media(
-                r.media.document.thumbs[0],
-                Config.TMP_DOWNLOAD_DIRECTORY
-            )
+            a = await r.download_media(thumb=-1)
         except Exception as e:
-            await event.edit(str(e))
+            return await edit_or_reply(event, str(e))
         try:
-            await borg.send_file(
+            await event.client.send_file(
                 event.chat_id,
                 a,
                 force_document=False,
@@ -104,17 +96,31 @@ async def _(event):
             os.remove(a)
             await event.delete()
         except Exception as e:
-            await event.edit(str(e))
+            await edit_or_reply(event, str(e))
     elif os.path.exists(thumb_image_path):
-        caption_str = "Currently Saved Thumbnail. Clear with `.clearthumbnail`"
-        await borg.send_file(
+        caption_str = "Currently Saved Thumbnail"
+        await event.client.send_file(
             event.chat_id,
             thumb_image_path,
             caption=caption_str,
             force_document=False,
             allow_cache=False,
-            reply_to=event.message.id
+            reply_to=event.message.id,
         )
-        await event.edit(caption_str)
+        await edit_or_reply(event, caption_str)
     else:
-        await event.edit("Reply `.gethumbnail` as a reply to a media")
+        await edit_or_reply(event, "Reply `.gethumbnail` as a reply to a media")
+
+
+CMD_HELP.update(
+    {
+        "thumbnail": "**Plugin :** `thumbnail`\
+    \n\n**Syntax :** `.savethumb`\
+    \n**Usage : **Reply to file or video to save it as temporary thumbimage\
+    \n\n**Syntax : **`.clearthumb`\
+    \n**Usage : **To clear Thumbnail no longer you uploads uses custom thumbanail\
+    \n\n**Syntax : **`.getthumb`\
+    \n**Usage : **To get thumbnail of given video or gives your present thumbnail\
+    "
+    }
+)

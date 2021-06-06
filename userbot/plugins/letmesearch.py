@@ -1,162 +1,285 @@
-"""
-Let me Google / YouTube / DuckDuckGo / altnews / Xvideo / Pornhub / var / log / dyno that for you!
-Syntax:
- .lmg <search query>
- .lmy <search query>
- .ddg <search query>
- .lmalt <search news>
- .lmx <search porn>
- .lmx2 <search porn>
- .lmp <search porn>
- .lmvar <heroku app name>
- .lmlog <heroku app name>
- .dyno <type billing>
- .lmkp <type name of place as on indiankanoon.com>
- .lmki <Type name of item as on indiankanoon.com>
- .gem <Type name of item as on gem.gov.in>
- .archive <Type name of website you want to get info on wayback machine>
-"""
-
+from asyncio import sleep
 
 import requests
-from userbot.utils import admin_cmd
+
+from userbot import catub
+
+from ..core.managers import edit_delete, edit_or_reply
+
+plugin_category = "utils"
 
 
-@borg.on(admin_cmd(pattern="lmg (.*)"))
+@catub.cat_cmd(
+    pattern="lmg (.*)",
+    command=("lmg", plugin_category),
+    info={
+        "header": "Searches the given query in Google and shows you the link of that query.",
+        "usage": "{tr}lmg <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given query in Google and shows you the link of that query."
     input_str = event.pattern_match.group(1)
     sample_url = "https://da.gd/s?url=http://google.com/search?q={}".format(
-        input_str.replace(" ", "+"))
+        input_str.replace(" ", "+")
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **Googal** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **Google** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="lmy (.*)"))
+@catub.cat_cmd(
+    pattern="lmy (.*)",
+    command=("lmy", plugin_category),
+    info={
+        "header": "Searches the given query in youtube and shows you the link of that query.",
+        "usage": "{tr}lmy <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given query in youtube and shows you the link of that query."
     input_str = event.pattern_match.group(1)
-    sample_url = "https://da.gd/s?url=https://www.youtube.com/results?search_query={}".format(
-        input_str.replace(" ", "+"))
+    sample_url = (
+        "https://da.gd/s?url=https://www.youtube.com/results?search_query={}".format(
+            input_str.replace(" ", "+")
+        )
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **UThoob** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **youtube** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="ddg (.*)"))
+@catub.cat_cmd(
+    pattern="ddg (.*)",
+    command=("ddg", plugin_category),
+    info={
+        "header": "Searches the given query in Duck buck go and shows you the link of that query.",
+        "usage": "{tr}ddg <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given query in Duck buck go and shows you the link of that query."
     input_str = event.pattern_match.group(1)
-    sample_url = "https://da.gd/s?url=https://duckduckgo.com/?q={}&t=h_&ia=about".format(
-        input_str.replace(" ", "+"))
+    sample_url = (
+        "https://da.gd/s?url=https://duckduckgo.com/?q={}&t=h_&ia=about".format(
+            input_str.replace(" ", "+")
+        )
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **duckduckgo** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **duckduckgo** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="lmalt (.*)"))
+@catub.cat_cmd(
+    pattern="lmalt (.*)",
+    command=("lmalt", plugin_category),
+    info={
+        "header": "Searches the given query in altnews and shows you the link of that query.",
+        "usage": "{tr}lmalt <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given query in altnews and shows you the link of that query."
     input_str = event.pattern_match.group(1)
     sample_url = "https://da.gd/s?url=https://www.altnews.in/?s={}".format(
-        input_str.replace(" ", "+"))
+        input_str.replace(" ", "+")
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **altnews** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **altnews** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="lmvar (.*)"))
+@catub.cat_cmd(
+    pattern="lmvar (.*)",
+    command=("lmvar", plugin_category),
+    info={
+        "header": "Searches the given app name in heroku and show that app vars page link .",
+        "usage": "{tr}lmvar <app name>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given app name in heroku and show that app vars page link ."
     input_str = event.pattern_match.group(1)
-    sample_url = "https://da.gd/s?url=https://dashboard.heroku.com/apps/{}/settings".format(
-        input_str.replace(" ", "+"))
+    sample_url = (
+        "https://da.gd/s?url=https://dashboard.heroku.com/apps/{}/settings".format(
+            input_str.replace(" ", "+")
+        )
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **var** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **var** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="lmlog (.*)"))
+@catub.cat_cmd(
+    pattern="lmlog (.*)",
+    command=("lmlog", plugin_category),
+    info={
+        "header": "Searches the given app name in heroku and shows you logs page link of that app.",
+        "usage": "{tr}lmlog <app name>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given app name in heroku and shows you logs page link of that app."
     input_str = event.pattern_match.group(1)
     sample_url = "https://da.gd/s?url=https://dashboard.heroku.com/apps/{}/logs".format(
-        input_str.replace(" ", "+"))
+        input_str.replace(" ", "+")
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **log** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **log** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="dyno(.*)"))
+@catub.cat_cmd(
+    pattern="dyno (.*)",
+    command=("dyno", plugin_category),
+    info={
+        "header": "Searches the given app name in heroku and shows you dyno page link of that app.",
+        "usage": "{tr}dyno <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given app name in heroku and shows you dyno page link of that app."
     input_str = event.pattern_match.group(1)
     sample_url = "https://da.gd/s?url=https://dashboard.heroku.com/account/{}".format(
-        input_str.replace(" ", "+"))
+        input_str.replace(" ", "+")
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **dyno** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **dyno** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="lmkp (.*)"))
+@catub.cat_cmd(
+    pattern="lmkp (.*)",
+    command=("lmkp", plugin_category),
+    info={
+        "header": "Searches the given query in indian kanoon and shows you the link of that query.",
+        "usage": "{tr}lmkp <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given query in indian kanoon and shows you the link of that query."
     input_str = event.pattern_match.group(1)
     sample_url = "https://da.gd/s?url=https://indiankanoon.org/search/?formInput={}+sortby%3Amostrecent".format(
-        input_str.replace(" ", "+"))
+        input_str.replace(" ", "+")
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **Indiankanoon.com : Place** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **Indiankanoon.com : Place** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="gem (.*)"))
+@catub.cat_cmd(
+    pattern="gem (.*)",
+    command=("gem", plugin_category),
+    info={
+        "header": "Searches the given query in Government e marketplace and shows you the link of that query.",
+        "usage": "{tr}gem <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given query in Government e marketplace and shows you the link of that query."
     input_str = event.pattern_match.group(1)
     sample_url = "https://da.gd/s?url=https://mkp.gem.gov.in/search?q={}&sort_type=created_at_desc&_xhr=1".format(
-        input_str.replace(" ", "+"))
+        input_str.replace(" ", "+")
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me **gem.gov.in** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me **gem.gov.in** that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)
 
 
-@borg.on(admin_cmd(pattern="archive (.*)"))
+@catub.cat_cmd(
+    pattern="archive (.*)",
+    command=("archive", plugin_category),
+    info={
+        "header": "Searches the given query in web archive and shows you the link of that query.",
+        "usage": "{tr}archive <Query>",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "Searches the given query in web archive and shows you the link of that query."
     input_str = event.pattern_match.group(1)
     sample_url = "https://da.gd/s?url=https://web.archive.org/web/*/{}".format(
-        input_str.replace(" ", "+"))
+        input_str.replace(" ", "+")
+    )
     response_api = requests.get(sample_url).text
+    event = await edit_or_reply(event, "`Searching.....`")
+    await sleep(2)
     if response_api:
-        await event.edit("Let me run your link on wayback machine that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(input_str, response_api.rstrip()))
+        await event.edit(
+            "Let me run your link on wayback machine that for you:\n👉 [{}]({})\n`Thank me later 😉` ".format(
+                input_str, response_api.rstrip()
+            )
+        )
     else:
-        await event.edit("Something went wrong. Please try again later.")
+        await edit_delete(event, "`Something went wrong. Please try again later.`", 5)

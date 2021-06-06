@@ -1,145 +1,484 @@
-from userbot import CMD_HELP, fonts
-from userbot.utils import admin_cmd
+import random
+
+from userbot import catub
+
+from ..core.managers import edit_or_reply
+from . import fonts
+
+plugin_category = "extra"
 
 
-@borg.on(admin_cmd(pattern="vapor(?: |$)(.*)"))
-async def vapor(vpr):
-    """ Vaporize everything! """
-    if not vpr.text[0].isalpha() and vpr.text[0] not in ("/", "#", "@", "!"):
-        reply_text = list()
-        textx = await vpr.get_reply_message()
-        message = vpr.pattern_match.group(1)
-        if message:
-            pass
-        elif textx:
-            message = textx.text
+@catub.cat_cmd(
+    pattern="fmusical(?: |$)(.*)",
+    command=("fmusical", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": [
+            "{tr}fmusical <text>",
+            "{tr}fmusical reply this command to text message",
+        ],
+        "examples": "{tr}fmusical catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normalfontcharacter in string:
+        if normalfontcharacter in fonts.normalfont:
+            musicalcharacter = fonts.musicalfont[
+                fonts.normalfont.index(normalfontcharacter)
+            ]
+            string = string.replace(normalfontcharacter, musicalcharacter)
+    await edit_or_reply(event, string)
+
+
+@catub.cat_cmd(
+    pattern="ancient(?: |$)(.*)",
+    command=("ancient", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": [
+            "{tr}ancient <text>",
+            "{tr}ancient reply this command to text message",
+        ],
+        "examples": "{tr}ancient catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normalfontcharacter in string:
+        if normalfontcharacter in fonts.normalfont:
+            ancientcharacter = fonts.ancientfont[
+                fonts.normalfont.index(normalfontcharacter)
+            ]
+            string = string.replace(normalfontcharacter, ancientcharacter)
+    await edit_or_reply(event, string)
+
+
+@catub.cat_cmd(
+    pattern="vapor(?: |$)(.*)",
+    command=("vapor", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}vapor <text>", "{tr}vapor reply this command to text message"],
+        "examples": "{tr}vapor catuserbot",
+    },
+)
+async def vapor(event):
+    "Changes font style of the given text"
+    reply_text = []
+    textx = await event.get_reply_message()
+    message = event.pattern_match.group(1)
+    if message:
+        pass
+    elif textx:
+        message = textx.text
+    else:
+        await edit_or_reply(event, "`Ｇｉｖｅ ｓｏｍｅ ｔｅｘｔ ｆｏｒ ｖａｐｏｒ！`")
+        return
+
+    for charac in message:
+        if 0x21 <= ord(charac) <= 0x7F:
+            reply_text.append(chr(ord(charac) + 0xFEE0))
+        elif ord(charac) == 0x20:
+            reply_text.append(chr(0x3000))
         else:
-            await vpr.edit("`Ｇｉｖｅ ｓｏｍｅ ｔｅｘｔ ｆｏｒ ｖａｐｏｒ！`")
-            return
+            reply_text.append(charac)
 
-        for charac in message:
-            if 0x21 <= ord(charac) <= 0x7F:
-                reply_text.append(chr(ord(charac) + 0xFEE0))
-            elif ord(charac) == 0x20:
-                reply_text.append(chr(0x3000))
-            else:
-                reply_text.append(charac)
-
-        await vpr.edit("".join(reply_text))
+    await edit_or_reply(event, "".join(reply_text))
 
 
-@borg.on(admin_cmd(pattern="smallcaps(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="smallcaps(?: |$)(.*)",
+    command=("smallcaps", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": [
+            "{tr}smallcaps <text>",
+            "{tr}smallcaps reply this command to text message",
+        ],
+        "examples": "{tr}smallcaps catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "Changes font style of the given text"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            smallcapscharacter = fonts.smallcapsfont[fonts.normaltext.index(
-                normaltextcharacter)]
+            smallcapscharacter = fonts.smallcapsfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
             string = string.replace(normaltextcharacter, smallcapscharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="blackbf(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="blackbf(?: |$)(.*)",
+    command=("blackbf", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": [
+            "{tr}blackbf <text>",
+            "{tr}blackbf reply this command to text message",
+        ],
+        "examples": "{tr}blackbf catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "Changes font style of the given text"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            bubblesblackcharacter = fonts.bubblesblackfont[fonts.normaltext.index(
-                normaltextcharacter)]
+            bubblesblackcharacter = fonts.bubblesblackfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
             string = string.replace(normaltextcharacter, bubblesblackcharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="bubbles(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="bubbles(?: |$)(.*)",
+    command=("bubbles", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": [
+            "{tr}bubbles <text>",
+            "{tr}bubbles reply this command to text message",
+        ],
+        "examples": "{tr}bubbles catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "Changes font style of the given text"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            bubblescharacter = fonts.bubblesfont[fonts.normaltext.index(
-                normaltextcharacter)]
+            bubblescharacter = fonts.bubblesfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
             string = string.replace(normaltextcharacter, bubblescharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="tanf(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="tanf(?: |$)(.*)",
+    command=("tanf", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}tanf <text>", "{tr}tanf reply this command to text message"],
+        "examples": "{tr}tanf catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "Changes font style of the given text"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            tantextcharacter = fonts.tantextfont[fonts.normaltext.index(
-                normaltextcharacter)]
+            tantextcharacter = fonts.tantextfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
             string = string.replace(normaltextcharacter, tantextcharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="boxf(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="boxf(?: |$)(.*)",
+    command=("boxf", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}boxf <text>", "{tr}boxf reply this command to text message"],
+        "examples": "{tr}boxf catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "Changes font style of the given text"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            littleboxtextcharacter = fonts.littleboxtextfont[fonts.normaltext.index(
-                normaltextcharacter)]
-            string = string.replace(
-                normaltextcharacter,
-                littleboxtextcharacter)
-    await event.edit(string)
+            littleboxtextcharacter = fonts.littleboxtextfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
+            string = string.replace(normaltextcharacter, littleboxtextcharacter)
+    await edit_or_reply(event, string)
 
 
-@borg.on(admin_cmd(pattern="smothtext(?: |$)(.*)"))
+@catub.cat_cmd(
+    pattern="smothtext(?: |$)(.*)",
+    command=("smothtext", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": [
+            "{tr}smothtext <text>",
+            "{tr}smothtext reply this command to text message",
+        ],
+        "examples": "{tr}smothtext catuserbot",
+    },
+)
 async def stylish_generator(event):
+    "Changes font style of the given text"
     args = event.pattern_match.group(1)
     if not args:
         get = await event.get_reply_message()
         args = get.text
     if not args:
-        await event.edit("What I am Supposed to change give text")
+        await edit_or_reply(event, "What I am Supposed to change give text")
         return
-    string = '  '.join(args).lower()
+    string = "  ".join(args).lower()
     for normaltextcharacter in string:
         if normaltextcharacter in fonts.normaltext:
-            smothtextcharacter = fonts.smothtextfont[fonts.normaltext.index(
-                normaltextcharacter)]
+            smothtextcharacter = fonts.smothtextfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
             string = string.replace(normaltextcharacter, smothtextcharacter)
-    await event.edit(string)
+    await edit_or_reply(event, string)
 
 
-CMD_HELP.update({
-    "fonts": ".vapor (text) or .vapor reply to message \
-\nUsage: Vaporize the given text. \
-"
-})
+@catub.cat_cmd(
+    pattern="egyptf(?: |$)(.*)",
+    command=("egyptf", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}egyptf <text>", "{tr}egyptf reply this command to text message"],
+        "examples": "{tr}egyptf catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normaltextcharacter in string:
+        if normaltextcharacter in fonts.normaltext:
+            egyptfontcharacter = fonts.egyptfontfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
+            string = string.replace(normaltextcharacter, egyptfontcharacter)
+    await edit_or_reply(event, string)
+
+
+@catub.cat_cmd(
+    pattern="maref(?: |$)(.*)",
+    command=("maref", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}maref <text>", "{tr}maref reply this command to text message"],
+        "examples": "{tr}maref catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normaltextcharacter in string:
+        if normaltextcharacter in fonts.normaltext:
+            nightmarecharacter = fonts.nightmarefont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
+            string = string.replace(normaltextcharacter, nightmarecharacter)
+    await edit_or_reply(event, string)
+
+
+@catub.cat_cmd(
+    pattern="handcf(?: |$)(.*)",
+    command=("handcf", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}handcf <text>", "{tr}handcf reply this command to text message"],
+        "examples": "{tr}handcf catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normaltextcharacter in string:
+        if normaltextcharacter in fonts.normaltext:
+            hwcapitalcharacter = fonts.hwcapitalfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
+            string = string.replace(normaltextcharacter, hwcapitalcharacter)
+    await edit_or_reply(event, string)
+
+
+@catub.cat_cmd(
+    pattern="doublef(?: |$)(.*)",
+    command=("doublef", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": [
+            "{tr}doublef <text>",
+            "{tr}doublef reply this command to text message",
+        ],
+        "examples": "{tr}doublef catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normaltextcharacter in string:
+        if normaltextcharacter in fonts.normaltext:
+            doubletextcharacter = fonts.doubletextfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
+            string = string.replace(normaltextcharacter, doubletextcharacter)
+    await edit_or_reply(event, string)
+
+
+@catub.cat_cmd(
+    pattern="mock(?: |$)(.*)",
+    command=("mock", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}mock <text>", "{tr}mock reply this command to text message"],
+        "examples": "{tr}mock catuserbot",
+    },
+)
+async def spongemocktext(mock):
+    "Changes font style of the given text"
+    reply_text = []
+    textx = await mock.get_reply_message()
+    message = mock.pattern_match.group(1)
+    if message:
+        pass
+    elif textx:
+        message = textx.text
+    else:
+        await edit_or_reply(mock, "`gIvE sOMEtHInG tO MoCk!`")
+        return
+
+    for charac in message:
+        if charac.isalpha() and random.randint(0, 1):
+            to_app = charac.upper() if charac.islower() else charac.lower()
+            reply_text.append(to_app)
+        else:
+            reply_text.append(charac)
+
+    await edit_or_reply(mock, "".join(reply_text))
+
+
+@catub.cat_cmd(
+    pattern="ghostf(?: |$)(.*)",
+    command=("ghostf", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}ghostf <text>", "{tr}ghostf reply this command to text message"],
+        "examples": "{tr}ghostf catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normaltextcharacter in string:
+        if normaltextcharacter in fonts.normaltext:
+            ghostfontcharacter = fonts.ghostfontfont[
+                fonts.normaltext.index(normaltextcharacter)
+            ]
+            string = string.replace(normaltextcharacter, ghostfontcharacter)
+    await edit_or_reply(event, string)
+
+
+@catub.cat_cmd(
+    pattern="handsf(?: |$)(.*)",
+    command=("handsf", plugin_category),
+    info={
+        "header": "Font style command.(Changes font style of the given text)",
+        "usage": ["{tr}handsf <text>", "{tr}handsf reply this command to text message"],
+        "examples": "{tr}handsf catuserbot",
+    },
+)
+async def stylish_generator(event):
+    "Changes font style of the given text"
+    args = event.pattern_match.group(1)
+    if not args:
+        get = await event.get_reply_message()
+        args = get.text
+    if not args:
+        await edit_or_reply(event, "What I am Supposed to change give text")
+        return
+    string = "  ".join(args).lower()
+    for normaltextcharacter in string:
+        if normaltextcharacter in fonts.normaltext:
+            hwslcharacter = fonts.hwslfont[fonts.normaltext.index(normaltextcharacter)]
+            string = string.replace(normaltextcharacter, hwslcharacter)
+    await edit_or_reply(event, string)

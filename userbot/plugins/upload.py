@@ -1,17 +1,39 @@
-import os
-import time
-import json
 import asyncio
+import io
+import os
+import pathlib
 import subprocess
+import time
 from datetime import datetime
+from pathlib import Path
+
 from hachoir.metadata import extractMetadata
 from hachoir.parser import createParser
-from telethon.tl.types import DocumentAttributeVideo
-from .. import ALIVE_NAME, CMD_HELP, LOGS
-from ..utils import admin_cmd, edit_or_reply, progress, sudo_cmd
+from telethon.tl import types
+from telethon.utils import get_attributes
 
-thumb_image_path = Config.TMP_DOWNLOAD_DIRECTORY + "/thumb_image.jpg"
-DEFAULTUSER = str(ALIVE_NAME) if ALIVE_NAME else "cat"
+from userbot import catub
+
+from ..Config import Config
+from ..core.managers import edit_delete, edit_or_reply
+from ..helpers import progress, reply_id
+from ..helpers.utils import reply_id
+
+plugin_category = "misc"
+
+PATH = os.path.join("./temp", "temp_vid.mp4")
+thumb_image_path = os.path.join(Config.TMP_DOWNLOAD_DIRECTORY, "thumb_image.jpg")
+plugin_category = "misc"
+downloads = pathlib.Path("./downloads/").absolute()
+NAME = "untitled"
+
+
+class UPLOAD:
+    def __init__(self):
+        self.uploaded = 0
+
+
+UPLOAD_ = UPLOAD()
 
 
 async def catlst_of_files(path):
@@ -23,247 +45,136 @@ async def catlst_of_files(path):
     return files
 
 
-@borg.on(admin_cmd(pattern="uploadir (.*)", outgoing=True))
-@borg.on(sudo_cmd(pattern="uploadir (.*)", allow_sudo=True))
-async def uploadir(event):
-    input_str = event.pattern_match.group(1)
-    udir_event = await edit_or_reply(event, "Uploading....")
-    if os.path.exists(input_str):
-        await udir_event.edit(f"Gathering file details in directory `{input_str}`")
-        lst_of_files = []
-        lst_of_files = await catlst_of_files(input_str)
-        uploaded = 0
-        await udir_event.edit(
-            "Found {} files. Uploading will start soon. Please wait!".format(
-                len(lst_of_files)))
-        for single_file in lst_of_files:
-            if os.path.exists(single_file):
-                # https://stackoverflow.com/a/678242/4723940
-                caption_rts = os.path.basename(single_file)
-                c_time = time.time()
-                if not caption_rts.lower().endswith(".mp4"):
-                    await borg.send_file(
-                        udir_event.chat_id,
-                        single_file,
-                        caption=caption_rts,
-                        force_document=False,
-                        allow_cache=False,
-                        reply_to=udir_event.message.id,
-                        progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
-                            progress(d, t, event, c_time, "Uploading...",
-                                     single_file)))
-                else:
-                    thumb_image = os.path.join(input_str, "thumb.jpg")
-                    c_time = time.time()
-                    metadata = extractMetadata(createParser(single_file))
-                    duration = 0
-                    width = 0
-                    height = 0
-                    if metadata.has("duration"):
-                        duration = metadata.get("duration").seconds
-                    if metadata.has("width"):
-                        width = metadata.get("width")
-                    if metadata.has("height"):
-                        height = metadata.get("height")
-                    await borg.send_file(
-                        event.chat_id,
-                        single_file,
-                        caption=caption_rts,
-                        thumb=thumb_image,
-                        force_document=False,
-                        allow_cache=False,
-                        reply_to=udir_event.message.id,
-                        attributes=[
-                            DocumentAttributeVideo(
-                                duration=duration,
-                                w=width,
-                                h=height,
-                                round_message=False,
-                                supports_streaming=True,
-                            )
-                        ],
-                        progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
-                            progress(d, t, udir_event, c_time, "Uploading...",
-                                     single_file)))
-                uploaded = uploaded + 1
-        await udir_event.edit("Uploaded {} files successfully !!".format(uploaded))
-    else:
-        await udir_event.edit("404: Directory Not Found")
-
-
-@borg.on(admin_cmd(pattern="upload (.*)", outgoing=True))
-@borg.on(sudo_cmd(pattern="upload (.*)", allow_sudo=True))
-async def _(event):
-    if event.fwd_from:
-        return
-    input_str = event.pattern_match.group(1)
-    mone = await edit_or_reply(event, "Processing ...")
-    thumb = None
-    if os.path.exists(thumb_image_path):
-        thumb = thumb_image_path
-    if os.path.exists(input_str):
-        start = datetime.now()
-        c_time = time.time()
-        caat = await bot.send_file(
-            event.chat_id,
-            input_str,
-            force_document=True,
-            supports_streaming=True,
-            allow_cache=False,
-            reply_to=event.message.id,
-            thumb=thumb,
-            progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
-                progress(d, t, mone, c_time, "trying to upload")
-            )
-        )
-        end = datetime.now()
-        ms = (end - start).seconds
-        await mone.delete()
-        await caat.edit(f"__**➥ Uploaded in {ms} seconds.**__\n__**➥ Uploaded by :-**__ {DEFAULTUSER}")
-    else:
-        await mone.edit("404: File Not Found")
-
-
 def get_video_thumb(file, output=None, width=320):
     output = file + ".jpg"
     metadata = extractMetadata(createParser(file))
-    p = subprocess.Popen([
-        'ffmpeg', '-i', file,
-        '-ss', str(int((0, metadata.get('duration').seconds)
-                       [metadata.has('duration')] / 2)),
+    cmd = [
+        "ffmpeg",
+        "-i",
+        file,
+        "-ss",
+        str(int((0, metadata.get("duration").seconds)[metadata.has("duration")] / 2)),
         # '-filter:v', 'scale={}:-1'.format(width),
-        '-vframes', '1',
+        "-vframes",
+        "1",
         output,
-    ], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    ]
+    p = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
     p.communicate()
     if not p.returncode and os.path.lexists(file):
         return output
 
 
-def extract_w_h(file):
-    """ Get width and height of media """
-    command_to_run = [
-        "ffprobe",
-        "-v",
-        "quiet",
-        "-print_format",
-        "json",
-        "-show_format",
-        "-show_streams",
-        file,
-    ]
-    # https://stackoverflow.com/a/11236144/4723940
-    try:
-        t_response = subprocess.check_output(command_to_run,
-                                             stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as exc:
-        LOGS.warning(exc)
-    else:
-        x_reponse = t_response.decode("UTF-8")
-        response_json = json.loads(x_reponse)
-        width = int(response_json["streams"][0]["width"])
-        height = int(response_json["streams"][0]["height"])
-        return width, height
+def sortthings(contents, path):
+    catsort = []
+    contents.sort()
+    for file in contents:
+        catpath = os.path.join(path, file)
+        if os.path.isfile(catpath):
+            catsort.append(file)
+    for file in contents:
+        catpath = os.path.join(path, file)
+        if os.path.isdir(catpath):
+            catsort.append(file)
+    return catsort
 
 
-@borg.on(admin_cmd(pattern="uploadas(stream|vn|all) (.*)", outgoing=True))
-@borg.on(sudo_cmd(pattern="uploadas(stream|vn|all) (.*) ", allow_sudo=True))
-async def uploadas(event):
-    # For .uploadas command, allows you to specify some arguments for upload.
-    type_of_upload = event.pattern_match.group(1)
-    input_str = event.pattern_match.group(2)
-    uas_event = await edit_or_reply(event, "uploading.....")
-    supports_streaming = False
-    round_message = False
-    spam_big_messages = False
-    if type_of_upload == "stream":
-        supports_streaming = True
-    if type_of_upload == "vn":
-        round_message = True
-    if type_of_upload == "all":
-        spam_big_messages = True
-    thumb = None
-    file_name = None
-    if "|" in input_str:
-        file_name, thumb = input_str.split("|")
-        file_name = file_name.strip()
-        thumb = thumb.strip()
-    else:
-        file_name = input_str
-        thumb = vthumb = get_video_thumb(file_name)
-    if not thumb:
+async def _get_file_name(path: pathlib.Path, full: bool = True) -> str:
+    return str(path.absolute()) if full else path.stem + path.suffix
+
+
+async def upload(path, event, udir_event, catflag=None):  # sourcery no-metrics
+    catflag = catflag or False
+    reply_to_id = await reply_id(event)
+    if os.path.isdir(path):
+        await event.client.send_message(
+            event.chat_id,
+            f"**Folder : **`{str(path)}`",
+        )
+        Files = os.listdir(path)
+        Files = sortthings(Files, path)
+        for file in Files:
+            catpath = os.path.join(path, file)
+            await upload(Path(catpath), event, udir_event)
+    elif os.path.isfile(path):
+        fname = os.path.basename(path)
+        c_time = time.time()
+        thumb = None
         if os.path.exists(thumb_image_path):
             thumb = thumb_image_path
-    if os.path.exists(file_name):
-        metadata = extractMetadata(createParser(file_name))
-        duration = 0
-        width = 0
-        height = 0
-        if metadata.has("duration"):
-            duration = metadata.get("duration").seconds
-        if metadata.has("width"):
-            width = metadata.get("width")
-        if metadata.has("height"):
-            height = metadata.get("height")
-        try:
-            if supports_streaming:
-                c_time = time.time()
-                await borg.send_file(
-                    uas_event.chat_id,
-                    file_name,
-                    thumb=thumb,
-                    caption=input_str,
-                    force_document=False,
-                    allow_cache=False,
-                    reply_to=event.message.id,
-                    attributes=[
-                        DocumentAttributeVideo(
-                            duration=duration,
-                            w=width,
-                            h=height,
-                            round_message=False,
-                            supports_streaming=True,
-                        )
-                    ],
-                    progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
-                        progress(d, t, uas_event, c_time, "Uploading...",
-                                 file_name)))
-            elif round_message:
-                c_time = time.time()
-                await borg.send_file(
-                    uas_event.chat_id,
-                    file_name,
-                    thumb=thumb,
-                    allow_cache=False,
-                    reply_to=event.message.id,
-                    video_note=True,
-                    attributes=[
-                        DocumentAttributeVideo(
-                            duration=0,
-                            w=1,
-                            h=1,
-                            round_message=True,
-                            supports_streaming=True,
-                        )
-                    ],
-                    progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
-                        progress(d, t, uas_event, c_time, "Uploading...",
-                                 file_name)))
-            elif spam_big_messages:
-                await uas_event.edit("TBD: Not (yet) Implemented")
-                return
-            try:
-                os.remove(vthumb)
-            except BaseException:
-                pass
-            await uas_event.edit("Uploaded successfully !!")
-        except FileNotFoundError as err:
-            await uas_event.edit(str(err))
-    else:
-        await uas_event.edit("404: File Not Found")
+        f = path.absolute()
+        attributes, mime_type = get_attributes(str(f))
+        ul = io.open(f, "rb")
+        uploaded = await event.client.fast_upload_file(
+            file=ul,
+            progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
+                progress(d, t, event, c_time, "trying to upload", file_name=fname)
+            ),
+        )
+        ul.close()
+        media = types.InputMediaUploadedDocument(
+            file=uploaded,
+            mime_type=mime_type,
+            attributes=attributes,
+            force_file=catflag,
+            thumb=await event.client.upload_file(thumb) if thumb else None,
+        )
+        await event.client.send_file(
+            event.chat_id,
+            file=media,
+            caption=f"**File Name : **`{fname}`",
+            reply_to=reply_to_id,
+        )
 
-CMD_HELP.update({
-    "upload":
-    ".upload <path in server>\
-\nUsage: Uploads a locally stored file to the chat."
-})
+        UPLOAD_.uploaded += 1
+
+
+@catub.cat_cmd(
+    pattern="upload( -f)? (.*)",
+    command=("upload", plugin_category),
+    info={
+        "header": "To upload files from server to telegram",
+        "description": "To upload files which are downloaded in your bot.",
+        "flags": {"f": "Use this to make upload files as documents."},
+        "examples": [
+            "{tr}upload <file/folder path>",
+            "{tr}upload -f <file/folder path>",
+        ],
+    },
+)
+async def uploadir(event):
+    "To upload files to telegram."
+    input_str = event.pattern_match.group(2)
+    path = Path(input_str)
+    start = datetime.now()
+    flag = event.pattern_match.group(1)
+    flag = bool(flag)
+    if not os.path.exists(path):
+        return await edit_or_reply(
+            event,
+            f"`there is no such directory/file with the name {path} to upload`",
+        )
+    udir_event = await edit_or_reply(event, "Uploading....")
+    if os.path.isdir(path):
+        await edit_or_reply(udir_event, f"`Gathering file details in directory {path}`")
+        UPLOAD_.uploaded = 0
+        await upload(path, event, udir_event, catflag=flag)
+        end = datetime.now()
+        ms = (end - start).seconds
+        await edit_delete(
+            udir_event,
+            f"`Uploaded {UPLOAD_.uploaded} files successfully in {ms} seconds. `",
+        )
+    else:
+        await edit_or_reply(udir_event, f"`Uploading file .....`")
+        UPLOAD_.uploaded = 0
+        await upload(path, event, udir_event, catflag=flag)
+        end = datetime.now()
+        ms = (end - start).seconds
+        await edit_delete(
+            udir_event, f"`Uploaded file {str(path)} successfully in {ms} seconds. `"
+        )

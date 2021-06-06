@@ -2,36 +2,54 @@
 Available Commands:
 .tts LanguageCode as reply to a message
 .tts LangaugeCode | text to speak"""
-from userbot import CMD_HELP
-import asyncio
+
 import os
 import subprocess
 from datetime import datetime
+
 from gtts import gTTS
-from userbot.utils import admin_cmd
-from userbot.plugins import deEmojify
+
+from userbot import catub
+
+from ..core.managers import edit_delete, edit_or_reply
+from . import deEmojify, reply_id
+
+plugin_category = "utils"
 
 
-@borg.on(admin_cmd(pattern="tts (.*)"))
+@catub.cat_cmd(
+    pattern="tts (.*)",
+    command=("tts", plugin_category),
+    info={
+        "header": "Text to speech command.",
+        "usage": [
+            "{tr}tts <text>",
+            "{tr}tts <reply>",
+            "{tr}tts <language code> ; <text>",
+        ],
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "text to speech command"
     input_str = event.pattern_match.group(1)
     start = datetime.now()
+    reply_to_id = await reply_id(event)
     if event.reply_to_msg_id:
         previous_message = await event.get_reply_message()
         text = previous_message.message
-        lan = input_str
-    elif "|" in input_str:
-        lan, text = input_str.split("|")
+        lan = input_str or "en"
+    elif ";" in input_str:
+        lan, text = input_str.split(";")
     else:
-        await event.edit("Invalid Syntax. Module stopping.")
-        return
+        if not input_str:
+            return await edit_or_reply(event, "Invalid Syntax. Module stopping.")
+        text = input_str
+        lan = "en"
     text = deEmojify(text.strip())
     lan = lan.strip()
-    if not os.path.isdir(Config.TMP_DOWNLOAD_DIRECTORY):
-        os.makedirs(Config.TMP_DOWNLOAD_DIRECTORY)
-    required_file_name = Config.TMP_DOWNLOAD_DIRECTORY + "voice.ogg"
+    if not os.path.isdir("./temp/"):
+        os.makedirs("./temp/")
+    required_file_name = "./temp/" + "voice.ogg"
     try:
         # https://github.com/SpEcHiDe/UniBorg/commit/17f8682d5d2df7f3921f50271b5b6722c80f4106
         tts = gTTS(text, lang=lan)
@@ -48,11 +66,12 @@ async def _(event):
             "100k",
             "-vbr",
             "on",
-            required_file_name + ".opus"
+            required_file_name + ".opus",
         ]
         try:
             t_response = subprocess.check_output(
-                command_to_execute, stderr=subprocess.STDOUT)
+                command_to_execute, stderr=subprocess.STDOUT
+            )
         except (subprocess.CalledProcessError, NameError, FileNotFoundError) as exc:
             await event.edit(str(exc))
             # continue sending required_file_name
@@ -61,27 +80,17 @@ async def _(event):
             required_file_name = required_file_name + ".opus"
         end = datetime.now()
         ms = (end - start).seconds
-        await borg.send_file(
+        await event.client.send_file(
             event.chat_id,
             required_file_name,
-            # caption="Processed {} ({}) in {} seconds!".format(text[0:97], lan, ms),
-            reply_to=event.message.reply_to_msg_id,
+            reply_to=reply_to_id,
             allow_cache=False,
-            voice_note=True
+            voice_note=True,
         )
         os.remove(required_file_name)
-        await event.edit("Processed {} ({}) in {} seconds!".format(text[0:97], lan, ms))
-        await asyncio.sleep(5)
-        await event.delete()
+        await edit_delete(
+            event,
+            "`Processed text {} into voice in {} seconds!`".format(text[0:20], ms),
+        )
     except Exception as e:
-        await event.edit(str(e))
-
-
-CMD_HELP.update({
-    "tts":
-    " Google Text to Speech\
-\nAvailable Commands:\
-\n.tts LanguageCode as reply to a message\
-\n\n.tts LangaugeCode | text to speak\
-"
-})
+        await edit_or_reply(event, str(e))

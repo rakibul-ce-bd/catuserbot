@@ -1,102 +1,133 @@
 """
 `Credits` @amnd33p
+from ..helpers.utils import _format
 Modified by @mrconfused
 """
+
 import io
 import traceback
 from datetime import datetime
-from selenium import webdriver
-from userbot.utils import admin_cmd
-from userbot import CMD_HELP
+
 import requests
+from selenium import webdriver
 from validators.url import url
 
+from userbot import catub
 
-@borg.on(admin_cmd(pattern="ss (.*)"))
+from ..Config import Config
+from ..core.managers import edit_or_reply
+from . import reply_id
+
+plugin_category = "utils"
+
+
+@catub.cat_cmd(
+    pattern="ss (.*)",
+    command=("ss", plugin_category),
+    info={
+        "header": "To Take a screenshot of a website.",
+        "usage": "{tr}ss <link>",
+        "examples": "{tr}ss https://github.com/sandy1709/catuserbot",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "To Take a screenshot of a website."
     if Config.CHROME_BIN is None:
-        await event.edit("Need to install Google Chrome. Module Stopping.")
-        return
-    await event.edit("Processing ...")
+        return await edit_or_reply(
+            event, "Need to install Google Chrome. Module Stopping."
+        )
+    catevent = await edit_or_reply(event, "`Processing ...`")
     start = datetime.now()
     try:
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--ignore-certificate-errors')
+        chrome_options.add_argument("--ignore-certificate-errors")
         chrome_options.add_argument("--test-type")
         chrome_options.add_argument("--headless")
         # https://stackoverflow.com/a/53073789/4723940
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.binary_location = Config.CHROME_BIN
-        await event.edit("Starting Google Chrome BIN")
+        await event.edit("`Starting Google Chrome BIN`")
         driver = webdriver.Chrome(chrome_options=chrome_options)
         input_str = event.pattern_match.group(1)
-        caturl = url(input_str)
+        inputstr = input_str
+        caturl = url(inputstr)
         if not caturl:
-            await event.edit("the url must be in the format `https://www.google.com`")
-            return
-        driver.get(input_str)
-        await event.edit("Calculating Page Dimensions")
+            inputstr = "http://" + input_str
+            caturl = url(inputstr)
+        if not caturl:
+            return await catevent.edit("`The given input is not supported url`")
+        driver.get(inputstr)
+        await catevent.edit("`Calculating Page Dimensions`")
         height = driver.execute_script(
-            "return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);")
+            "return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);"
+        )
         width = driver.execute_script(
-            "return Math.max(document.body.scrollWidth, document.body.offsetWidth, document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth);")
+            "return Math.max(document.body.scrollWidth, document.body.offsetWidth, document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth);"
+        )
         driver.set_window_size(width + 100, height + 100)
         # Add some pixels on top of the calculated dimensions
         # for good measure to make the scroll bars disappear
         im_png = driver.get_screenshot_as_png()
         # saves screenshot of entire page
-        await event.edit("Stoppping Chrome Bin")
+        await catevent.edit("`Stoppping Chrome Bin`")
         driver.close()
-        message_id = event.message.id
-        if event.reply_to_msg_id:
-            message_id = event.reply_to_msg_id
+        message_id = await reply_id(event)
         end = datetime.now()
         ms = (end - start).seconds
         hmm = f"**url : **{input_str} \n**Time :** `{ms} seconds`"
-        await event.delete()
+        await catevent.delete()
         with io.BytesIO(im_png) as out_file:
             out_file.name = input_str + ".PNG"
-            await borg.send_file(
+            await event.client.send_file(
                 event.chat_id,
                 out_file,
                 caption=hmm,
                 force_document=True,
                 reply_to=message_id,
                 allow_cache=False,
-                silent=True
+                silent=True,
             )
     except Exception:
-        await event.edit(traceback.format_exc())
+        await catevent.edit(f"`{traceback.format_exc()}`")
 
 
-@borg.on(admin_cmd(pattern="scapture (.*)"))
+@catub.cat_cmd(
+    pattern="scapture (.*)",
+    command=("scapture", plugin_category),
+    info={
+        "header": "To Take a screenshot of a website.",
+        "description": "For functioning of this command you need to set SCREEN_SHOT_LAYER_ACCESS_KEY var",
+        "usage": "{tr}scapture <link>",
+        "examples": "{tr}scapture https://github.com/sandy1709/catuserbot",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "To Take a screenshot of a website."
     start = datetime.now()
+    message_id = await reply_id(event)
     if Config.SCREEN_SHOT_LAYER_ACCESS_KEY is None:
-        await event.edit("Need to get an API key from https://screenshotlayer.com/product \nModule stopping!")
-        return
-    await event.edit("Processing ...")
+        return await edit_or_reply(
+            event,
+            "`Need to get an API key from https://screenshotlayer.com/product and need to set it SCREEN_SHOT_LAYER_ACCESS_KEY !`",
+        )
+    catevent = await edit_or_reply(event, "`Processing ...`")
     sample_url = "https://api.screenshotlayer.com/api/capture?access_key={}&url={}&fullpage={}&viewport={}&format={}&force={}"
     input_str = event.pattern_match.group(1)
-    caturl = url(input_str)
+    inputstr = input_str
+    caturl = url(inputstr)
     if not caturl:
-        await event.edit("the url must be in the format `https://www.google.com`")
-        return
-    response_api = requests.get(sample_url.format(
-        Config.SCREEN_SHOT_LAYER_ACCESS_KEY,
-        input_str,
-        "1",
-        "2560x1440",
-        "PNG",
-        "1"
-    ))
+        inputstr = "http://" + input_str
+        caturl = url(inputstr)
+    if not caturl:
+        return await catevent.edit("`The given input is not supported url`")
+    response_api = requests.get(
+        sample_url.format(
+            Config.SCREEN_SHOT_LAYER_ACCESS_KEY, inputstr, "1", "2560x1440", "PNG", "1"
+        )
+    )
     # https://stackoverflow.com/a/23718458/4723940
-    contentType = response_api.headers['content-type']
+    contentType = response_api.headers["content-type"]
     end = datetime.now()
     ms = (end - start).seconds
     hmm = f"**url : **{input_str} \n**Time :** `{ms} seconds`"
@@ -104,25 +135,15 @@ async def _(event):
         with io.BytesIO(response_api.content) as screenshot_image:
             screenshot_image.name = "screencapture.png"
             try:
-                await borg.send_file(
+                await event.client.send_file(
                     event.chat_id,
                     screenshot_image,
                     caption=hmm,
                     force_document=True,
-                    reply_to=event.message.reply_to_msg_id
+                    reply_to=message_id,
                 )
-                await event.delete()
+                await catevent.delete()
             except Exception as e:
-                await event.edit(str(e))
+                await catevent.edit(str(e))
     else:
-        await event.edit(response_api.text)
-
-CMD_HELP.update({
-    "screenshot":
-    ".ss <url>\
-    \nUsage: Takes a screenshot of a website and sends the screenshot.\
-    \nExample of a valid URL : `https://www.google.com`\
-    \n\n.scapture <url>\
-    \nUsage: Takes a screenshot of a website and sends the screenshot need to set config var for this.\
-    \nExample of a valid URL : `https://www.google.com`"
-})
+        await catevent.edit(f"`{response_api.text}`")

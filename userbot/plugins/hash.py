@@ -1,25 +1,34 @@
-# Copyright (C) 2019 The Raphielscape Company LLC.
-#
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
-# you may not use this file except in compliance with the License.
-#
-""" Userbot module containing hash and encode/decode commands. """
-
+import asyncio
+import base64
+import os
+import time
 from subprocess import PIPE
 from subprocess import run as runapp
-import pybase64
-from userbot import CMD_HELP
-from userbot.utils import admin_cmd, errors_handler
+
+from userbot import catub
+
+from ..Config import Config
+from ..core.managers import edit_delete, edit_or_reply
+from ..helpers.tools import media_type
+from . import media_type, progress
+
+plugin_category = "tools"
 
 
-@borg.on(admin_cmd(outgoing=True, pattern="hash (.*)"))
-@errors_handler
+@catub.cat_cmd(
+    pattern="hash (.*)",
+    command=("hash", plugin_category),
+    info={
+        "header": "Find the md5, sha1, sha256, sha512 of the string when written into a txt file.",
+        "usage": "{tr}hash <text>",
+        "examples": "{tr}hash catuserbot",
+    },
+)
 async def gethash(hash_q):
-    """ For .hash command, find the md5, sha1, sha256, sha512 of the string. """
-    hashtxt_ = hash_q.pattern_match.group(1)
-    hashtxt = open("hashdis.txt", "w+")
-    hashtxt.write(hashtxt_)
-    hashtxt.close()
+    "Find the md5, sha1, sha256, sha512 of the string when written into a txt file."
+    hashtxt_ = "".join(hash_q.text.split(maxsplit=1)[1:])
+    with open("hashdis.txt", "w+") as hashtxt:
+        hashtxt.write(hashtxt_)
     md5 = runapp(["md5sum", "hashdis.txt"], stdout=PIPE)
     md5 = md5.stdout.decode()
     sha1 = runapp(["sha1sum", "hashdis.txt"], stdout=PIPE)
@@ -29,38 +38,70 @@ async def gethash(hash_q):
     sha512 = runapp(["sha512sum", "hashdis.txt"], stdout=PIPE)
     runapp(["rm", "hashdis.txt"], stdout=PIPE)
     sha512 = sha512.stdout.decode()
-    ans = ("Text: `" + hashtxt_ + "`\nMD5: `" + md5 + "`SHA1: `" + sha1 +
-           "`SHA256: `" + sha256 + "`SHA512: `" + sha512[:-1] + "`")
-    if len(ans) > 4096:
-        hashfile = open("hashes.txt", "w+")
-        hashfile.write(ans)
-        hashfile.close()
-        await hash_q.client.send_file(
-            hash_q.chat_id,
-            "hashes.txt",
-            reply_to=hash_q.id,
-            caption="`It's too big, sending a text file instead. `")
-        runapp(["rm", "hashes.txt"], stdout=PIPE)
+    ans = f"**Text : **\
+            \n`{hashtxt_}`\
+            \n**MD5 : **`\
+            \n`{md5}`\
+            \n**SHA1 : **`\
+            \n`{sha1}`\
+            \n**SHA256 : **`\
+            \n`{sha256}`\
+            \n**SHA512 : **`\
+            \n`{sha512[:-1]}`\
+         "
+    await edit_or_reply(hash_q, ans)
+
+
+@catub.cat_cmd(
+    pattern="hbase (en|de) (.*)",
+    command=("hbase", plugin_category),
+    info={
+        "header": "Find the base64 encoding or decoding of the given string.",
+        "flags": {
+            "en": "Use this to encode the given text.",
+            "de": "use this to decode the given text.",
+        },
+        "usage": ["{tr}hbase en <text to encode>", "{tr}hbase de <encoded text>"],
+        "examples": ["{tr}hbase en Catuserbot", "{tr}hbase de Q2F0dXNlcmJvdA=="],
+    },
+)
+async def endecrypt(event):
+    "To encode or decode the string using base64"
+    string = "".join(event.text.split(maxsplit=2)[2:])
+    catevent = event
+    if event.pattern_match.group(1) == "en":
+        if string:
+            result = base64.b64encode(bytes(string, "utf-8")).decode("utf-8")
+            result = f"**Shhh! It's Encoded : **\n`{result}`"
+        else:
+            reply = await event.get_reply_message()
+            if not reply:
+                return await edit_delete(event, "`What should i encode`")
+            mediatype = media_type(reply)
+            if mediatype is None:
+                result = base64.b64encode(bytes(reply.text, "utf-8")).decode("utf-8")
+                result = f"**Shhh! It's Encoded : **\n`{result}`"
+            else:
+                catevent = await edit_or_reply(event, "`Encoding ...`")
+                c_time = time.time()
+                downloaded_file_name = await event.client.download_media(
+                    reply,
+                    Config.TMP_DOWNLOAD_DIRECTORY,
+                    progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
+                        progress(d, t, catevent, c_time, "trying to download")
+                    ),
+                )
+                catevent = await edit_or_reply(event, "`Encoding ...`")
+                with open(downloaded_file_name, "rb") as image_file:
+                    result = base64.b64encode(image_file.read()).decode("utf-8")
+                os.remove(downloaded_file_name)
+        await edit_or_reply(
+            catevent, result, file_name="encodedfile.txt", caption="It's Encoded"
+        )
     else:
-        await hash_q.reply(ans)
-
-
-@borg.on(admin_cmd(outgoing=True, pattern="hbase (en|de) (.*)"))
-@errors_handler
-async def endecrypt(query):
-    """ For .base64 command, find the base64 encoding of the given string. """
-    if query.pattern_match.group(1) == "en":
         lething = str(
-            pybase64.b64encode(bytes(query.pattern_match.group(2),
-                                     "utf-8")))[2:]
-        await query.reply("Shhh! It's Encoded: `" + lething[:-1] + "`")
-    else:
-        lething = str(
-            pybase64.b64decode(bytes(query.pattern_match.group(2), "utf-8"),
-                               validate=True))[2:]
-        await query.reply("Decoded: `" + lething[:-1] + "`")
-
-
-CMD_HELP.update({"hash": ".hbase en or .hbase de \nUsage: Find the base64 encoding of the given string\
-    \n\n.hash\nUsage: Find the md5, sha1, sha256, sha512 of the string when written into a txt file."
-                 })
+            base64.b64decode(
+                bytes(event.pattern_match.group(2), "utf-8"), validate=True
+            )
+        )[2:]
+        await edit_or_reply(event, "**Decoded text :**\n`" + lething[:-1] + "`")

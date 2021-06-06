@@ -1,18 +1,55 @@
 import asyncio
-from userbot.utils import admin_cmd
-from userbot import ALIVE_NAME
-DEFAULTUSER = str(ALIVE_NAME) if ALIVE_NAME else "cat"
+
+from . import ALIVE_NAME, catub, edit_or_reply
+
+plugin_category = "fun"
 
 
-@borg.on(admin_cmd(pattern="eye$"))
+@catub.cat_cmd(
+    pattern="kilr(?: |$)(.*)",
+    command=("kilr", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}kilr",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
-    animation_interval = 3
-    animation_ttl = range(0, 10)
-    await event.edit("👁👁")
+    "animation command"
+    name = event.pattern_match.group(1)
+    if not name:
+        name = "die"
+    animation_interval = 0.7
+    animation_ttl = range(8)
+    event = await edit_or_reply(event, f"**Ready Commando **__{ALIVE_NAME}....")
     animation_chars = [
+        "Ｆｉｉｉｉｉｒｅ",
+        f"__**Commando **__{ALIVE_NAME}          \n\n_/﹋\_\n (҂`_´)\n <,︻╦╤─ ҉ - \n _/﹋\_\n",
+        f"__**Commando **__{ALIVE_NAME}          \n\n_/﹋\_\n (҂`_´)\n  <,︻╦╤─ ҉ - -\n _/﹋\_\n",
+        f"__**Commando **__{ALIVE_NAME}          \n\n_/﹋\_\n (҂`_´)\n <,︻╦╤─ ҉ - - -\n _/﹋\_\n",
+        f"__**Commando **__{ALIVE_NAME}          \n\n_/﹋\_\n (҂`_´)\n<,︻╦╤─ ҉ - -\n _/﹋\_\n",
+        f"__**Commando **__{ALIVE_NAME}          \n\n_/﹋\_\n (҂`_´)\n <,︻╦╤─ ҉ - \n _/﹋\_\n",
+        f"__**Commando **__{ALIVE_NAME}         \n\n_/﹋\_\n (҂`_´)\n  <,︻╦╤─ ҉ - -\n _/﹋\_\n",
+        f"__**Commando **__{ALIVE_NAME}          \n\n_/﹋\_\n (҂`_´)\n <,︻╦╤─ ҉ - - - {name}\n _/﹋\_\n",
+    ]
+    for i in animation_ttl:
+        await asyncio.sleep(animation_interval)
+        await event.edit(animation_chars[i % 8])
 
+
+@catub.cat_cmd(
+    pattern="eye$",
+    command=("eye", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}eye",
+    },
+)
+async def _(event):
+    "animation command"
+    animation_interval = 3
+    animation_ttl = range(10)
+    event = await edit_or_reply(event, "👁👁")
+    animation_chars = [
         "👁👁\n  👄  =====> Hey, How are you?",
         "👁👁\n  👅  =====> Everything okay?",
         "👁👁\n  💋  =====> Why are you staring at this?",
@@ -22,7 +59,7 @@ async def _(event):
         "👁👁\n  👄  =====> It's not funny",
         "👁👁\n  👅  =====> I guess ur still looking",
         "👁👁\n  💋  =====> Ok man 😑",
-        "👁👁\n  👄  =====> I go away then"
+        "👁👁\n  👄  =====> I go away then",
     ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
@@ -31,13 +68,19 @@ async def _(event):
     await event.delete()
 
 
-@borg.on(admin_cmd(pattern="thinking$"))
+@catub.cat_cmd(
+    pattern="thinking$",
+    command=("thinking", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}thinking",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
-    animation_interval = 0.01
-    animation_ttl = range(0, 288)
-    await event.edit("thinking..")
+    "animation command"
+    animation_interval = 0.05
+    animation_ttl = range(288)
+    event = await edit_or_reply(event, "thinking..")
     animation_chars = [
         "THINKING",
         "THI&K#N₹",
@@ -74,20 +117,26 @@ async def _(event):
         "¶H×NK&N*",
         "NGITHKIN",
         "T+I#K@₹G",
-        "THINKING... 🤔"
+        "THINKING... 🤔",
     ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
         await event.edit(animation_chars[i % 36])
 
 
-@borg.on(admin_cmd(pattern=f"snake$", outgoing=True))
+@catub.cat_cmd(
+    pattern="snake$",
+    command=("snake", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}snake",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "animation command"
     animation_interval = 0.3
-    animation_ttl = range(0, 27)
-    await event.edit("snake..")
+    animation_ttl = range(27)
+    event = await edit_or_reply(event, "snake..")
     animation_chars = [
         "◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️",
         "◻️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️",
@@ -115,20 +164,26 @@ async def _(event):
         "◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️\n◻️◼️◼️◻️◻️\n◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️",
         "◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️\n◻️◻️◼️◻️◻️\n◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️",
         "◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️\n◻️◻️◻️◻️◻️",
-        "◻️◻️◻️◻️◻️\n◻️◼️◻️◼️◻️\n◻️◻️◻️◻️◻️\n◻️◼️◼️◼️◻️\n◻️◻️◻️◻️◻️"
+        "◻️◻️◻️◻️◻️\n◻️◼️◻️◼️◻️\n◻️◻️◻️◻️◻️\n◻️◼️◼️◼️◻️\n◻️◻️◻️◻️◻️",
     ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
         await event.edit(animation_chars[i % 27])
 
 
-@borg.on(admin_cmd(pattern=f"human$", outgoing=True))
+@catub.cat_cmd(
+    pattern="human$",
+    command=("human", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}human",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "animation command"
     animation_interval = 0.5
-    animation_ttl = range(0, 16)
-    await event.edit("human...")
+    animation_ttl = range(16)
+    event = await edit_or_reply(event, "human...")
     animation_chars = [
         "⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬜⬜⬜⬜⬜⬜⬜\n⬜⬜⬜⬜⬜⬜⬜\n🔲🔲🔲🔲🔲🔲🔲",
         "⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛🚗\n⬜⬜⬜⬜⬜⬜⬜\n⬜⬜⬜⬜⬜⬜⬜\n🔲🔲🔲🔲🔲🔲🔲",
@@ -145,21 +200,27 @@ async def _(event):
         "⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛😊⬛⬛⬛\n⬛⬜⬜⬜⬜⬜⬛\n⬛⬛⬛⬜⬛⬛⬛\n⬛⬛⬜⬛⬜⬛⬛\n⬛⬜⬛⬛⬛⬜⬛\n⬛⬛⬛⬛⬛⬛⬛\n🔲🔲🔲🔲🔲🔲🔲",
         "⬛⬛⬛⬛⬛⬛⬛\n⬛⬜⬛😊⬛⬜⬛\n⬛⬛⬜⬜⬜⬛⬛\n⬛⬛⬛⬜⬛⬛⬛\n⬛⬛⬜⬛⬜⬛⬛\n⬛⬜⬛⬛⬛⬜⬛\n⬛⬛⬛⬛⬛⬛⬛\n🔲🔲🔲🔲🔲🔲🔲",
         "⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛😊⬛⬛⬛\n⬛⬛⬜⬜⬜⬛⬛\n⬛⬜⬛⬜⬛⬜⬛\n⬛⬛⬜⬛⬜⬛⬛\n⬛⬛⬜⬛⬜⬛⬛\n⬛⬛⬜⬛⬜⬛⬛\n🔲🔲🔲🔲🔲🔲🔲",
-        "⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬜⬜⬜😊⬜⬜⬜\n⬜⬜⬜⬜⬜⬜⬜\n🔲🔲🔲🔲🔲🔲🔲"]
+        "⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬛⬛⬛⬛⬛⬛⬛\n⬜⬜⬜😊⬜⬜⬜\n⬜⬜⬜⬜⬜⬜⬜\n🔲🔲🔲🔲🔲🔲🔲",
+    ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
         await event.edit(animation_chars[i % 16])
 
 
-@borg.on(admin_cmd(pattern=f"mc$", outgoing=True))
+@catub.cat_cmd(
+    pattern="mc$",
+    command=("mc", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}mc",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "animation command"
     animation_interval = 0.3
-    animation_ttl = range(0, 28)
-    await event.edit("mc..")
+    animation_ttl = range(28)
+    event = await edit_or_reply(event, "mc..")
     animation_chars = [
-
         "◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️",
         "◻️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️",
         "◼️◻️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️",
@@ -187,20 +248,26 @@ async def _(event):
         "◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◻️◼️",
         "◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◻️",
         "◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️\n◼️◼️◼️◼️◼️",
-        "◼️◼️◼️◼️◼️\n◼️◻️◼️◻️◼️\n◼️◼️◼️◼️◼️\n◼️◻️◻️◻️◼️\n◼️◼️◼️◼️◼️"
+        "◼️◼️◼️◼️◼️\n◼️◻️◼️◻️◼️\n◼️◼️◼️◼️◼️\n◼️◻️◻️◻️◼️\n◼️◼️◼️◼️◼️",
     ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
         await event.edit(animation_chars[i % 28])
 
 
-@borg.on(admin_cmd(pattern="virus$"))
+@catub.cat_cmd(
+    pattern="virus$",
+    command=("virus", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}virus",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "animation command"
     animation_interval = 1
-    animation_ttl = range(0, 30)
-    await event.edit("Injecting virus....")
+    animation_ttl = range(30)
+    event = await edit_or_reply(event, "Injecting virus....")
     animation_chars = [
         "🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎",
         "◼️🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎\n🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎🔴🔵🌕♓♎⛎",
@@ -231,21 +298,27 @@ async def _(event):
         "◼️◼️◼️◼️\n◼️◼️◼️◼️\n◼️◼️◼️◼️\n◼️◼️◼️◼️",
         "◼️◼️◼️\n◼️◼️◼️\n◼️◼️◼️",
         "◼️◼️\n◼️◼️",
-        "◼️"]
+        "◼️",
+    ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
         await event.edit(animation_chars[i % 30])
 
 
-@borg.on(admin_cmd(pattern=r"repe$", outgoing=True))
+@catub.cat_cmd(
+    pattern="repe$",
+    command=("repe", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}repe",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "animation command"
     animation_interval = 0.2
-    animation_ttl = range(0, 30)
-    await event.edit("repe")
+    animation_ttl = range(30)
+    event = await edit_or_reply(event, "repe")
     animation_chars = [
-
         "**r**",
         "**ra**",
         "**rap**",
@@ -275,20 +348,26 @@ async def _(event):
         "🚃🚃🚃",
         "🚃🚃",
         "🚃",
-        "**rApEd**"
+        "**rApEd**",
     ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
         await event.edit(animation_chars[i % 30])
 
 
-@borg.on(admin_cmd(pattern=f"nakal$", outgoing=True))
+@catub.cat_cmd(
+    pattern="nikal$",
+    command=("nikal", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}nikal",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "animation command"
     animation_interval = 0.5
-    animation_ttl = range(0, 6)
-    await event.edit("nakal")
+    animation_ttl = range(6)
+    event = await edit_or_reply(event, "nakal")
     animation_chars = [
         "`⠀⠀⠀⣠⣶⡾⠏⠉⠙⠳⢦⡀⠀⠀⠀⢠⠞⠉⠙⠲⡀⠀\n ⠀⣴⠿⠏⠀⠀⠀⠀⠀   ⢳⡀⠀⡏⠀⠀⠀   ⠀⢷\n⢠⣟⣋⡀⢀⣀⣀⡀⠀⣀⡀⣧⠀⢸⠀⠀⠀  ⠀   ⡇\n⢸⣯⡭⠁⠸⣛⣟⠆⡴⣻⡲⣿  ⣸ Nikal   ⡇\n ⣟⣿⡭⠀⠀⠀⠀⠀⢱⠀⠀  ⣿  ⢹⠀        ⡇\n  ⠙⢿⣯⠄⠀⠀⠀__⠀⠀⡿ ⠀⡇⠀⠀⠀⠀    ⡼\n⠀⠀⠀⠹⣶⠆⠀⠀⠀⠀⠀⡴⠃⠀   ⠘⠤⣄⣠⠞⠀\n⠀⠀⠀⠀⢸⣷⡦⢤⡤⢤⣞⣁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n⠀⢀⣤⣴⣿⣏⠁⠀⠀⠸⣏⢯⣷⣖⣦⡀⠀⠀⠀⠀⠀⠀\n⢀⣾⣽⣿⣿⣿⣿⠛⢲⣶⣾⢉⡷⣿⣿⠵⣿⠀⠀⠀⠀⠀⠀\n⣼⣿⠍⠉⣿⡭⠉⠙⢺⣇⣼⡏⠀⠀ ⠀⣄⢸⠀⠀⠀⠀⠀⠀`",
         "`⠀⠀⠀⣠⣶⡾⠏⠉⠙⠳⢦⡀⠀⠀⠀⢠⠞⠉⠙⠲⡀⠀\n ⠀⣴⠿⠏⠀⠀⠀⠀⠀  ⠀⢳⡀⠀⡏⠀⠀⠀   ⠀⢷\n⢠⣟⣋⡀⢀⣀⣀⡀⠀⣀⡀⣧⠀⢸⠀⠀⠀      ⡇\n⢸⣯⡭⠁⠸⣛⣟⠆⡴⣻⡲⣿  ⣸ Lavde   ⡇\n ⣟⣿⡭⠀⠀⠀⠀⠀⢱⠀⠀  ⣿  ⢹⠀        ⡇\n  ⠙⢿⣯⠄⠀⠀|__|⠀⠀⡿ ⠀⡇⠀⠀⠀⠀    ⡼\n⠀⠀⠀⠹⣶⠆⠀⠀⠀⠀⠀⡴⠃⠀   ⠘⠤⣄⣠⠞⠀\n⠀⠀⠀⠀⢸⣷⡦⢤⡤⢤⣞⣁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n⠀⢀⣤⣴⣿⣏⠁⠀⠀⠸⣏⢯⣷⣖⣦⡀⠀⠀⠀⠀⠀⠀\n⢀⣾⣽⣿⣿⣿⣿⠛⢲⣶⣾⢉⡷⣿⣿⠵⣿⠀⠀⠀⠀⠀⠀\n⣼⣿⠍⠉⣿⡭⠉⠙⢺⣇⣼⡏⠀⠀ ⠀⣄⢸⠀⠀⠀⠀⠀⠀`",
@@ -302,13 +381,19 @@ async def _(event):
         await event.edit(animation_chars[i % 6])
 
 
-@borg.on(admin_cmd(pattern=f"music$", outgoing=True))
+@catub.cat_cmd(
+    pattern="music$",
+    command=("music", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}music",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
+    "animation command"
     animation_interval = 1.5
-    animation_ttl = range(0, 11)
-    await event.edit("starting player...")
+    animation_ttl = range(11)
+    event = await edit_or_reply(event, "starting player...")
     animation_chars = [
         "⬤⬤⬤ 81% ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`✖️`\n\n⠀⠀⠀⠀⠀[cee jay Music Player](tg://user?id=916234223)\n\n⠀⠀⠀⠀**Now Playing:shape of u**\n\n**00:00** ▱▱▱▱▱▱▱▱▱▱ **00:10**\n\n⠀⠀⠀⠀⠀`🔂` `⏮️` `⏪️` `▶️` `⏩️` `⏭️`\n\n**⠀Next Song:** __Alan Walker - Alone.__\n\n⠀⠀⠀⠀**⠀Device: Nokia 1100**",
         "⬤⬤⬤ 81% ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`✖️`\n\n⠀⠀⠀⠀⠀[cee jay Music Player](tg://user?id=916234223)\n\n⠀⠀⠀⠀**Now Playing:shape of u**\n\n**00:01** ▰▱▱▱▱▱▱▱▱▱ **00:10**\n\n⠀⠀⠀⠀⠀`🔂` `⏮️` `⏪️` `⏸️` `⏩️` `⏭️`\n\n**⠀Next Song:** __Alan Walker - Alone.__\n\n⠀⠀⠀⠀**⠀Device: Nokia 1100**",
@@ -320,18 +405,26 @@ async def _(event):
         "⬤⬤◯ 80% ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`✖️`\n\n⠀⠀⠀⠀⠀[cee jay Music Player](tg://user?id=916234223)\n\n⠀⠀⠀⠀**Now Playing:shape of u**\n\n**00:07** ▰▰▰▰▰▰▰▱▱▱ **00:10**\n\n⠀⠀⠀⠀⠀`🔂` `⏮️` `⏪️` `⏸️` `⏩️` `⏭️`\n\n**⠀Next Song:** __Alan Walker - Alone.__\n\n⠀⠀⠀⠀**⠀Device: Nokia 1100**",
         "⬤⬤◯ 80% ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`✖️`\n\n⠀⠀⠀⠀⠀[cee jay Music Player](tg://user?id=916234223)\n\n⠀⠀⠀⠀**Now Playing:shape of u**\n\n**00:08** ▰▰▰▰▰▰▰▰▱▱ **00:10**\n\n⠀⠀⠀⠀⠀`🔂` `⏮️` `⏪️` `⏸️` `⏩️` `⏭️`\n\n**⠀Next Song:** __Alan Walker - Alone.__\n\n⠀⠀⠀⠀**⠀Device: Nokia 1100**",
         "⬤⬤◯ 80% ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`✖️`\n\n⠀⠀⠀⠀⠀[cee jay Music Player](tg://user?id=916234223)\n\n⠀⠀⠀⠀**Now Playing:shape of u**\n\n**00:09** ▰▰▰▰▰▰▰▰▰▱ **00:10**\n\n⠀⠀⠀⠀⠀`🔂` `⏮️` `⏪️` `⏸️` `⏩️` `⏭️`\n\n**⠀Next Song:** __Alan Walker - Alone.__\n\n⠀⠀⠀⠀**⠀Device: Nokia 1100**",
-        "⬤⬤◯ 80% ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`✖️`\n\n⠀⠀⠀⠀⠀[cee jay Music Player](tg://user?id=916234223)\n\n⠀⠀⠀⠀**Now Playing:shape of u**\n\n**00:10** ▰▰▰▰▰▰▰▰▰▰ **00:10**\n\n⠀⠀⠀⠀⠀`🔂` `⏮️` `⏪️` `⏺️` `⏩️` `⏭️`\n\n**⠀Next Song:** __Alan Walker - Alone.__\n\n⠀⠀⠀⠀**⠀Device: Nokia 1100**"]
+        "⬤⬤◯ 80% ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`✖️`\n\n⠀⠀⠀⠀⠀[cee jay Music Player](tg://user?id=916234223)\n\n⠀⠀⠀⠀**Now Playing:shape of u**\n\n**00:10** ▰▰▰▰▰▰▰▰▰▰ **00:10**\n\n⠀⠀⠀⠀⠀`🔂` `⏮️` `⏪️` `⏺️` `⏩️` `⏭️`\n\n**⠀Next Song:** __Alan Walker - Alone.__\n\n⠀⠀⠀⠀**⠀Device: Nokia 1100**",
+    ]
     for i in animation_ttl:
         await asyncio.sleep(animation_interval)
         await event.edit(animation_chars[i % 11])
 
 
-@borg.on(admin_cmd(pattern=f"squ$", outgoing=True))
+@catub.cat_cmd(
+    pattern="squ$",
+    command=("squ", plugin_category),
+    info={
+        "header": "Fun animation try yourself to know more",
+        "usage": "{tr}squ",
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
-
-    await event.edit("╔═══════════════════╗ \n  \n╚═══════════════════╝")
+    "animation command"
+    event = await edit_or_reply(
+        event, "╔═══════════════════╗ \n  \n╚═══════════════════╝"
+    )
     await asyncio.sleep(1)
     await event.edit("╔═══════════════════╗ \n \t░ \n╚═══════════════════╝")
     await asyncio.sleep(1)
@@ -349,15 +442,26 @@ async def _(event):
     await asyncio.sleep(1)
     await event.edit("╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝")
     await asyncio.sleep(1)
-    await event.edit("╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝")
+    await event.edit(
+        "╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝"
+    )
     await asyncio.sleep(1)
-    await event.edit("╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝")
+    await event.edit(
+        "╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝"
+    )
     await asyncio.sleep(1)
-    await event.edit("╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝")
+    await event.edit(
+        "╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝"
+    )
     await asyncio.sleep(1)
-    await event.edit("╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝")
+    await event.edit(
+        "╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝"
+    )
     await asyncio.sleep(1)
-    await event.edit("╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝")
+    await event.edit(
+        "╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝"
+    )
     await asyncio.sleep(1)
-    await event.edit("╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝")
-    await asyncio.sleep(6)
+    await event.edit(
+        "╔═══════════════════╗ \n ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ \n╚═══════════════════╝"
+    )

@@ -1,31 +1,25 @@
-# Copyright (C) 2019 The Raphielscape Company LLC.
-#
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
-# you may not use this file except in compliance with the License.
-#
-""" Userbot module for getting the weather of a city. """
-from pytz import country_timezones as c_tz, timezone as tz, country_names as c_n
-from ..utils import admin_cmd, sudo_cmd, edit_or_reply, errors_handler
-from .. import OPEN_WEATHER_MAP_APPID as OWM_API, CMD_HELP
-from datetime import datetime
-import requests
-import aiohttp
-import json
-import time
+# CatUserbot module for getting the event of a event.
+
 import io
-import logging
-logging.basicConfig(
-    format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
-    level=logging.WARNING)
+import json
+from datetime import datetime
 
-# ===== CONSTANT =====
-DEFCITY = 'Delhi'
-# ====================
+import aiohttp
+import requests
+from pytz import country_names as c_n
+from pytz import country_timezones as c_tz
+from pytz import timezone as tz
 
+from ..Config import Config
+from ..helpers.utils import _format
+from ..sql_helper.globals import addgvar, gvarstatus
+from . import catub, edit_or_reply, logging, reply_id
 
+plugin_category = "utils"
+
+LOGS = logging.getLogger(__name__)
+# Get time zone of the given country. Credits: @aragon12 and @zakaryan2004.
 async def get_tz(con):
-    """ Get time zone of the given country. """
-    """ Credits: @aragon12 and @zakaryan2004. """
     for c_code in c_n:
         if con == c_n[c_code]:
             return tz(c_tz[c_code][0])
@@ -36,71 +30,45 @@ async def get_tz(con):
         return
 
 
-@borg.on(admin_cmd(pattern="weather (.*)"))
-@borg.on(sudo_cmd(pattern="weather (.*)", allow_sudo=True))
-async def _(event):
-    if event.fwd_from:
-        return
-    sample_url = "https://api.openweathermap.org/data/2.5/weather?q={}&APPID={}&units=metric"
-    input_str = event.pattern_match.group(1)
-    async with aiohttp.ClientSession() as session:
-        response_api_zero = await session.get(sample_url.format(input_str, Config.OPEN_WEATHER_MAP_APPID))
-    response_api = await response_api_zero.json()
-    if response_api["cod"] == 200:
-        country_code = response_api["sys"]["country"]
-        country_time_zone = int(response_api["timezone"])
-        sun_rise_time = int(response_api["sys"]["sunrise"]) + country_time_zone
-        sun_set_time = int(response_api["sys"]["sunset"]) + country_time_zone
-        event = await edit_or_reply(event,
-                                    """{}
-🌡**Temperature**: {}°С
-    🥶__minimium__: {}°С
-    🥵__maximum__ : {}°С
-☁️**Humidity**: {}%
-🌬**wind**: {}m/s
-⛈clouds: {}hpa
-🌄**Sunrise**: {} {}
-🌅**Sunset**: {} {}""".format(
-                                        input_str,
-                                        response_api["main"]["temp"],
-                                        response_api["main"]["temp_min"],
-                                        response_api["main"]["temp_max"],
-                                        response_api["main"]["humidity"],
-                                        response_api["wind"]["speed"],
-                                        response_api["clouds"]["all"],
-                                        # response_api["main"]["pressure"],
-                                        time.strftime(
-                                            "%Y-%m-%d %H:%M:%S", time.gmtime(sun_rise_time)),
-                                        country_code,
-                                        time.strftime(
-                                            "%Y-%m-%d %H:%M:%S", time.gmtime(sun_set_time)),
-                                        country_code
-                                    )
-                                    )
-    else:
-        event = await edit_or_reply(event, response_api["message"])
+def fahrenheit(f):
+    temp = str(((f - 273.15) * 9 / 5 + 32)).split(".")
+    return temp[0]
 
 
-@borg.on(admin_cmd(outgoing=True, pattern="climate(?: |$)(.*)"))
-@borg.on(sudo_cmd(pattern="climate(?: |$)(.*)", allow_sudo=True))
-@errors_handler
-async def get_weather(weather):
-    """ For .weather command, gets the current weather of a city. """
-    if not OWM_API:
-        await edit_or_reply(weather,
-                            "`Get an API key from` https://openweathermap.org/ `first.`")
-        return
-    APPID = OWM_API
-    if not weather.pattern_match.group(1):
-        CITY = DEFCITY
-        if not CITY:
-            await edit_or_reply(weather, "`Please specify a city or set one as default.`")
-            return
-    else:
-        CITY = weather.pattern_match.group(1)
+def celsius(c):
+    temp = str((c - 273.15)).split(".")
+    return temp[0]
+
+
+def sun(unix, ctimezone):
+    return datetime.fromtimestamp(unix, tz=ctimezone).strftime("%I:%M %p")
+
+
+@catub.cat_cmd(
+    pattern="climate(?: |$)(.*)",
+    command=("climate", plugin_category),
+    info={
+        "header": "To get the weather report of a city.",
+        "description": "Shows you the weather report of a city. By default it is Delhi, you can change it by {tr}setcity command.",
+        "note": "For functioning of this plugin you need to set OPEN_WEATHER_MAP_APPID var you can  get value from https://openweathermap.org/",
+        "usage": [
+            "{tr}climate",
+            "{tr}climate <city name>",
+        ],
+    },
+)
+async def get_weather(event):  # sourcery no-metrics
+    "To get the weather report of a city."
+    if not Config.OPEN_WEATHER_MAP_APPID:
+        return await edit_or_reply(
+            event, "`Get an API key from` https://openweathermap.org/ `first.`"
+        )
+    input_str = "".join(event.text.split(maxsplit=1)[1:])
+    CITY = gvarstatus("DEFCITY") or "Delhi" if not input_str else input_str
     timezone_countries = {
         timezone: country
-        for country, timezones in c_tz.items() for timezone in timezones
+        for country, timezones in c_tz.items()
+        for timezone in timezones
     }
     if "," in CITY:
         newcity = CITY.split(",")
@@ -109,92 +77,85 @@ async def get_weather(weather):
         else:
             country = await get_tz((newcity[1].strip()).title())
             try:
-                countrycode = timezone_countries[f'{country}']
+                countrycode = timezone_countries[f"{country}"]
             except KeyError:
-                await weather.edit("`Invalid country.`")
-                return
+                return await edit_or_reply(event, "`Invalid Country.`")
             CITY = newcity[0].strip() + "," + countrycode.strip()
-    url = f'https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={APPID}'
-    request = requests.get(url)
-    result = json.loads(request.text)
-    if request.status_code != 200:
-        await weather.edit(f"`Invalid country.`")
-        return
-    cityname = result['name']
-    curtemp = result['main']['temp']
-    humidity = result['main']['humidity']
-    min_temp = result['main']['temp_min']
-    max_temp = result['main']['temp_max']
-    pressure = result['main']['pressure']
-    feel = result['main']['feels_like']
-    desc = result['weather'][0]
-    desc = desc['main']
-    country = result['sys']['country']
-    sunrise = result['sys']['sunrise']
-    sunset = result['sys']['sunset']
-    wind = result['wind']['speed']
-    winddir = result['wind']['deg']
-    cloud = result['clouds']['all']
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={Config.OPEN_WEATHER_MAP_APPID}"
+    async with aiohttp.ClientSession() as _session:
+        async with _session.get(url) as request:
+            requeststatus = request.status
+            requesttext = await request.text()
+    result = json.loads(requesttext)
+    if requeststatus != 200:
+        return await edit_or_reply(event, "`Invalid Country.`")
+    cityname = result["name"]
+    curtemp = result["main"]["temp"]
+    humidity = result["main"]["humidity"]
+    min_temp = result["main"]["temp_min"]
+    max_temp = result["main"]["temp_max"]
+    pressure = result["main"]["pressure"]
+    feel = result["main"]["feels_like"]
+    desc = result["weather"][0]
+    desc = desc["main"]
+    country = result["sys"]["country"]
+    sunrise = result["sys"]["sunrise"]
+    sunset = result["sys"]["sunset"]
+    wind = result["wind"]["speed"]
+    winddir = result["wind"]["deg"]
+    cloud = result["clouds"]["all"]
     ctimezone = tz(c_tz[country][0])
     time = datetime.now(ctimezone).strftime("%A, %I:%M %p")
     fullc_n = c_n[f"{country}"]
-    # dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-    #        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
     dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    div = (360 / len(dirs))
+    div = 360 / len(dirs)
     funmath = int((winddir + (div / 2)) / div)
     findir = dirs[funmath % len(dirs)]
     kmph = str(wind * 3.6).split(".")
     mph = str(wind * 2.237).split(".")
-
-    def fahrenheit(f):
-        temp = str(((f - 273.15) * 9 / 5 + 32)).split(".")
-        return temp[0]
-
-    def celsius(c):
-        temp = str((c - 273.15)).split(".")
-        return temp[0]
-
-    def sun(unix):
-        xx = datetime.fromtimestamp(unix, tz=ctimezone).strftime("%I:%M %p")
-        return xx
-    await edit_or_reply(weather,
-                        f"🌡**Temperature:** `{celsius(curtemp)}°C | {fahrenheit(curtemp)}°F`\n" +
-                        f"🥰**Human Feeling** `{celsius(feel)}°C | {fahrenheit(feel)}°F`\n" +
-                        f"🥶**Min. Temp.:** `{celsius(min_temp)}°C | {fahrenheit(min_temp)}°F`\n" +
-                        f"🥵**Max. Temp.:** `{celsius(max_temp)}°C | {fahrenheit(max_temp)}°F`\n" +
-                        f"☁️**Humidity:** `{humidity}%`\n" +
-                        f"🧧**Pressure** `{pressure} hPa`\n" +
-                        f"🌬**Wind:** `{kmph[0]} kmh | {mph[0]} mph, {findir}`\n" +
-                        f"⛈**Cloud:** `{cloud} %`\n" +
-                        f"🌄**Sunrise:** `{sun(sunrise)}`\n" +
-                        f"🌅**Sunset:** `{sun(sunset)}`\n\n\n" +
-                        f"**{desc}**\n" +
-                        f"`{cityname}, {fullc_n}`\n" +
-                        f"`{time}`\n")
+    await edit_or_reply(
+        event,
+        f"🌡**Temperature:** `{celsius(curtemp)}°C | {fahrenheit(curtemp)}°F`\n"
+        + f"🥰**Human Feeling** `{celsius(feel)}°C | {fahrenheit(feel)}°F`\n"
+        + f"🥶**Min. Temp.:** `{celsius(min_temp)}°C | {fahrenheit(min_temp)}°F`\n"
+        + f"🥵**Max. Temp.:** `{celsius(max_temp)}°C | {fahrenheit(max_temp)}°F`\n"
+        + f"☁️**Humidity:** `{humidity}%`\n"
+        + f"🧧**Pressure** `{pressure} hPa`\n"
+        + f"🌬**Wind:** `{kmph[0]} kmh | {mph[0]} mph, {findir}`\n"
+        + f"⛈**Cloud:** `{cloud} %`\n"
+        + f"🌄**Sunrise:** `{sun(sunrise,ctimezone)}`\n"
+        + f"🌅**Sunset:** `{sun(sunset,ctimezone)}`\n\n\n"
+        + f"**{desc}**\n"
+        + f"`{cityname}, {fullc_n}`\n"
+        + f"`{time}`\n",
+    )
 
 
-@borg.on(admin_cmd(outgoing=True, pattern="setcity(?: |$)(.*)"))
-@borg.on(sudo_cmd(pattern="setcity(?: |$)(.*)", allow_sudo=True))
-@errors_handler
-async def set_default_city(city):
-    """ For .ctime command, change the default userbot country for date and time commands. """
-    if not OWM_API:
-        await edit_or_reply(city,
-                            "`Get an API key from` https://openweathermap.org/ `first.`")
-        return
-    global DEFCITY
-    APPID = OWM_API
-    if not city.pattern_match.group(1):
-        CITY = DEFCITY
-        if not CITY:
-            await edit_or_reply(city, "`Please specify a city to set one as default.`")
-            return
-    else:
-        CITY = city.pattern_match.group(1)
+@catub.cat_cmd(
+    pattern="setcity(?: |$)(.*)",
+    command=("setcity", plugin_category),
+    info={
+        "header": "To set default city for climate cmd",
+        "description": "Sets your default city so you can just use .weather or .climate when ever you neededwithout typing city name each time",
+        "note": "For functioning of this plugin you need to set OPEN_WEATHER_MAP_APPID var you can  get value from https://openweathermap.org/",
+        "usage": [
+            "{tr}climate",
+            "{tr}climate <city name>",
+        ],
+    },
+)
+async def set_default_city(event):
+    "To set default city for climate/weather cmd"
+    if not Config.OPEN_WEATHER_MAP_APPID:
+        return await edit_or_reply(
+            event, "`Get an API key from` https://openweathermap.org/ `first.`"
+        )
+    input_str = event.pattern_match.group(1)
+    CITY = gvarstatus("DEFCITY") or "Delhi" if not input_str else input_str
     timezone_countries = {
         timezone: country
-        for country, timezones in c_tz.items() for timezone in timezones
+        for country, timezones in c_tz.items()
+        for timezone in timezones
     }
     if "," in CITY:
         newcity = CITY.split(",")
@@ -203,46 +164,70 @@ async def set_default_city(city):
         else:
             country = await get_tz((newcity[1].strip()).title())
             try:
-                countrycode = timezone_countries[f'{country}']
+                countrycode = timezone_countries[f"{country}"]
             except KeyError:
-                await edit_or_reply(city, "`Invalid country.`")
-                return
+                return await edit_or_reply(event, "`Invalid country.`")
             CITY = newcity[0].strip() + "," + countrycode.strip()
-    url = f'https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={APPID}'
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={Config.OPEN_WEATHER_MAP_APPID}"
     request = requests.get(url)
     result = json.loads(request.text)
     if request.status_code != 200:
-        await city.edit(f"`Invalid country.`")
-        return
-    DEFCITY = CITY
-    cityname = result['name']
-    country = result['sys']['country']
+        return await edit_or_reply(event, "`Invalid country.`")
+    addgvar("DEFCITY", CITY)
+    cityname = result["name"]
+    country = result["sys"]["country"]
     fullc_n = c_n[f"{country}"]
-    await edit_or_reply(city, f"`Set default city as {cityname}, {fullc_n}.`")
+    await edit_or_reply(event, f"`Set default event as {cityname}, {fullc_n}.`")
 
 
-@borg.on(admin_cmd(pattern="wttr (.*)"))
-@borg.on(sudo_cmd(pattern="wttr (.*)", allow_sudo=True))
+@catub.cat_cmd(
+    pattern="weather(?: |$)(.*)",
+    command=("weather", plugin_category),
+    info={
+        "header": "To get the weather report of a city.",
+        "description": "Shows you the weather report of a city . By default it is Delhi, you can change it by {tr}setcity command.",
+        "usage": [
+            "{tr}wttr",
+            "{tr}wttr <city name>",
+        ],
+    },
+)
 async def _(event):
-    if event.fwd_from:
-        return
-    sample_url = "https://wttr.in/{}.png"
-    # logger.info(sample_url)
+    "weather report today from 'wttr.in'"
     input_str = event.pattern_match.group(1)
+    if not input_str:
+        input_str = gvarstatus("DEFCITY") or "Delhi"
+    output = requests.get(f"https://wttr.in/{input_str}?mnTC0&lang=en").text
+    await edit_or_reply(event, output, parse_mode=_format.parse_pre)
+
+
+@catub.cat_cmd(
+    pattern="wttr(?: |$)(.*)",
+    command=("wttr", plugin_category),
+    info={
+        "header": "To get the weather report of a city.",
+        "description": "Shows you the weather report of a city for next 3 days . By default it is Delhi, you can change it by {tr}setcity command.",
+        "usage": [
+            "{tr}wttr",
+            "{tr}wttr <city name>",
+        ],
+    },
+)
+async def _(event):
+    "weather report for next 3 days from 'wttr.in'"
+    reply_to_id = await reply_id(event)
+    input_str = event.pattern_match.group(1)
+    if not input_str:
+        input_str = gvarstatus("DEFCITY") or "Delhi"
     async with aiohttp.ClientSession() as session:
+        sample_url = "https://wttr.in/{}.png"
         response_api_zero = await session.get(sample_url.format(input_str))
-        # logger.info(response_api_zero)
         response_api = await response_api_zero.read()
         with io.BytesIO(response_api) as out_file:
             await event.reply(
-                file=out_file
+                f"**City : **`{input_str}`", file=out_file, reply_to=reply_to_id
             )
-    await event.edit(input_str)
-
-CMD_HELP.update({
-    "climate":
-    ".climate <city> or .weather <city>, <country name/code>\
-    \nUsage: Gets the weather of a city.\n\
-    \n.setcity <city> or .setcity <city>, <country name/code>\
-    \nUsage: Sets your default city so you can just use .weather."
-})
+    try:
+        await event.delete()
+    except Exception as e:
+        LOGS.info(str(e))

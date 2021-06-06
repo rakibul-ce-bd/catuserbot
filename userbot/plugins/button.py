@@ -1,28 +1,44 @@
-"""
-Create Button Posts imported from uniborg
-modified for catuserbot by @sandy1709
-"""
+#    Copyright (C) 2020  sandeep.n(π.$)
+# button post makker for catuserbot thanks to uniborg for the base
+
+# by @sandy1709 (@mrconfused)
 import os
 import re
-from .. import CMD_HELP
-from telethon import Button
-from ..utils import admin_cmd, sudo_cmd, edit_or_reply
 
+from telethon import Button
+
+from ..Config import Config
+from . import catub, edit_delete, reply_id
+
+plugin_category = "tools"
 # regex obtained from:
 # https://github.com/PaulSonOfLars/tgbot/blob/master/tg_bot/modules/helper_funcs/string_handling.py#L23
-BTN_URL_REGEX = re.compile(
-    r"(\[([^\[]+?)\]\<buttonurl:(?:/{0,2})(.+?)(:same)?\>)")
+BTN_URL_REGEX = re.compile(r"(\[([^\[]+?)\]\<buttonurl:(?:/{0,2})(.+?)(:same)?\>)")
 
 
-@borg.on(admin_cmd(pattern=r"cbutton(?: |$)(.*)", outgoing=True))
-@borg.on(sudo_cmd(pattern="cbutton(?: |$)(.*)", allow_sudo=True))
+@catub.cat_cmd(
+    pattern="cbutton(?: |$)(.*)",
+    command=("cbutton", plugin_category),
+    info={
+        "header": "To create button posts",
+        "note": f"For working of this you need your bot ({Config.TG_BOT_USERNAME}) in the group/channel \
+        where you are using and Markdown is Default to html",
+        "options": "If you button to be in same row as other button then follow this <buttonurl:link:same> in 2nd button.",
+        "usage": [
+            "{tr}cbutton <text> [Name on button]<buttonurl:link you want to open>",
+        ],
+        "examples": "{tr}cbutton test [google]<buttonurl:https://www.google.com> [catuserbot]<buttonurl:https://t.me/catuserbot17:same> [support]<buttonurl:https://t.me/catuserbot_support>",
+    },
+)
 async def _(event):
-    chat = event.chat_id
+    "To create button posts."
     reply_message = await event.get_reply_message()
     if reply_message:
         markdown_note = reply_message.text
     else:
-        markdown_note = event.pattern_match.group(1)
+        markdown_note = "".join(event.text.split(maxsplit=1)[1:])
+    if not markdown_note:
+        return await edit_delete(event, "`what text should i use in button post`")
     prev = 0
     note_data = ""
     buttons = []
@@ -36,66 +52,64 @@ async def _(event):
         # if even, not escaped -> create button
         if n_escapes % 2 == 0:
             # create a thruple with button label, url, and newline status
-            buttons.append(
-                (match.group(2),
-                 match.group(3),
-                 bool(
-                    match.group(4))))
-            note_data += markdown_note[prev:match.start(1)]
+            buttons.append((match.group(2), match.group(3), bool(match.group(4))))
+            note_data += markdown_note[prev : match.start(1)]
             prev = match.end(1)
         # if odd, escaped -> move along
-        else:
+        elif n_escapes % 2 == 1:
             note_data += markdown_note[prev:to_check]
             prev = match.start(1) - 1
+        else:
+            break
     else:
         note_data += markdown_note[prev:]
-    message_text = note_data.strip()
+    message_text = note_data.strip() or None
     tl_ib_buttons = build_keyboard(buttons)
     tgbot_reply_message = None
-    if reply_message:
-        if reply_message.media:
-            tgbot_reply_message = await borg.download_media(reply_message.media)
-    await tgbot.send_message(
-        entity=chat,
+    if reply_message and reply_message.media:
+        tgbot_reply_message = await event.client.download_media(reply_message.media)
+    if tl_ib_buttons == []:
+        tl_ib_buttons = None
+    await event.client.tgbot.send_message(
+        entity=event.chat_id,
         message=message_text,
         parse_mode="html",
         file=tgbot_reply_message,
         link_preview=False,
         buttons=tl_ib_buttons,
-        silent=True
     )
     await event.delete()
     if tgbot_reply_message:
         os.remove(tgbot_reply_message)
 
-# Helpers
 
-
-@borg.on(admin_cmd(pattern=r"ibutton(?: |$)(.*)", outgoing=True))
-@borg.on(sudo_cmd(pattern="ibutton(?: |$)(.*)", allow_sudo=True))
+@catub.cat_cmd(
+    pattern="ibutton(?: |$)(.*)",
+    command=("ibutton", plugin_category),
+    info={
+        "header": "To create button posts via inline",
+        "note": f"Markdown is Default to html",
+        "options": "If you button to be in same row as other button then follow this <buttonurl:link:same> in 2nd button.",
+        "usage": [
+            "{tr}ibutton <text> [Name on button]<buttonurl:link you want to open>",
+        ],
+        "examples": "{tr}ibutton test [google]<buttonurl:https://www.google.com> [catuserbot]<buttonurl:https://t.me/catuserbot17:same> [support]<buttonurl:https://t.me/catuserbot_support>",
+    },
+)
 async def _(event):
-    reply_to_id = None
-    catinput = event.pattern_match.group(1)
-    if event.reply_to_msg_id:
-        reply_to_id = event.reply_to_msg_id
-    await event.get_reply_message()
+    "To create button posts via inline"
+    reply_to_id = await reply_id(event)
     # soon will try to add media support
-    if not catinput:
-        catinput = (await event.get_reply_message()).text
-    if not catinput:
-        await edit_or_reply(event, "`Give me some thing to write in bot inline`")
-        return
-    catinput = "Inline buttons " + catinput
-    tgbotusername = Var.TG_BOT_USER_NAME_BF_HER
-    results = await bot.inline_query(
-        tgbotusername,
-        catinput
-    )
-    await results[0].click(
-        event.chat_id,
-        reply_to=reply_to_id,
-        hide_via=True
-    )
+    reply_message = await event.get_reply_message()
+    if reply_message:
+        markdown_note = reply_message.text
+    else:
+        markdown_note = "".join(event.text.split(maxsplit=1)[1:])
+    if not markdown_note:
+        return await edit_delete(event, "`what text should i use in button post`")
+    catinput = "Inline buttons " + markdown_note
+    results = await event.client.inline_query(Config.TG_BOT_USERNAME, catinput)
+    await results[0].click(event.chat_id, reply_to=reply_to_id, hide_via=True)
     await event.delete()
 
 
@@ -107,16 +121,3 @@ def build_keyboard(buttons):
         else:
             keyb.append([Button.url(btn[0], btn[1])])
     return keyb
-
-
-CMD_HELP.update({
-    "button":
-    "**Plugin : **`button`\
-    \n\n**SYNTAX : **`.cbutton`\
-    \n**USAGE :** Buttons must be in th format as [name on button]<buttonurl:link you want to open> and markdown is Default to html\
-    \n**EXAMPLE :** `.cbutton test [google]<buttonurl:https://www.google.com> [catuserbot]<buttonurl:https://t.me/catuserbot17:same> [support]<buttonurl:https://t.me/catuserbot_support>`\
-    \n\n**SYNTAX : **`.ibutton`\
-    \n**USAGE :** Buttons must be in th format as [name on button]<buttonurl:link you want to open>\
-    \n**EXAMPLE :** `.ibutton test [google]<buttonurl:https://www.google.com> [catuserbot]<buttonurl:https://t.me/catuserbot17:same> [support]<buttonurl:https://t.me/catuserbot_support>`\
-    "
-})
